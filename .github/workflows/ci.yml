@@ -45,6 +45,9 @@ jobs:
       - name: Install Dart dependencies
         run: flutter pub get
 
+      - name: Check outdated dependencies
+        run: dart run scripts/check_outdated_deps.dart
+
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
 

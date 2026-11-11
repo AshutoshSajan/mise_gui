@@ -325,7 +325,9 @@ class _AppUpdateDialog extends ConsumerWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  tr('Could not open the browser. The update link was copied to the clipboard.'),
+                                  tr(
+                                    'Could not open the browser. The update link was copied to the clipboard.',
+                                  ),
                                 ),
                               ),
                             );
@@ -512,7 +514,11 @@ class _ReleaseNoteRow extends StatelessWidget {
 List<String> _releaseNoteLines(String raw) {
   final normalized = raw.replaceAll('\r\n', '\n').trim();
   if (normalized.isEmpty) {
-    return <String>[tr('This release includes various improvements and fixes. See GitHub for the full notes.')];
+    return <String>[
+      tr(
+        'This release includes various improvements and fixes. See GitHub for the full notes.',
+      ),
+    ];
   }
 
   final lines = normalized
@@ -523,6 +529,10 @@ List<String> _releaseNoteLines(String raw) {
       .toList(growable: false);
 
   return lines.isEmpty
-      ? <String>[tr('This release includes various improvements and fixes. See GitHub for the full notes.')]
+      ? <String>[
+          tr(
+            'This release includes various improvements and fixes. See GitHub for the full notes.',
+          ),
+        ]
       : lines;
 }

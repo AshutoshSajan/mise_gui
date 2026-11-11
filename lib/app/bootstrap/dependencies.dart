@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/repositories/config_repository.dart';

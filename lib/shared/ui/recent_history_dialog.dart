@@ -65,7 +65,9 @@ class _RecentHistoryDialogState extends ConsumerState<RecentHistoryDialog> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        tr('Review commands run from the app and their output.'),
+                        tr(
+                          'Review commands run from the app and their output.',
+                        ),
                         style: TextStyle(color: colors.textMuted, height: 1.5),
                       ),
                     ],
@@ -95,7 +97,9 @@ class _RecentHistoryDialogState extends ConsumerState<RecentHistoryDialog> {
                   if (snapshot.hasError) {
                     return Center(
                       child: Text(
-                        tr('Failed to load recent operations. Please try again later.'),
+                        tr(
+                          'Failed to load recent operations. Please try again later.',
+                        ),
                         style: TextStyle(color: colors.textMuted),
                       ),
                     );

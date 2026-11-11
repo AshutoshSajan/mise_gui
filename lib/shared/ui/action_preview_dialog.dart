@@ -338,7 +338,8 @@ class _CommandOnlyPreviewDialog extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const _CommandPreviewHint(
-              text: 'This is read-only. Closing the dialog will not run the command.',
+              text:
+                  'This is read-only. Closing the dialog will not run the command.',
             ),
           ],
         ),
@@ -492,7 +493,7 @@ class _CodeCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
+              ?trailing,
             ],
           ),
           const SizedBox(height: 12),

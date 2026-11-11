@@ -6,6 +6,9 @@
 
 ```bash
 npm run help
+npm run deps:check
+npm run deps:update
+npm run hooks:install
 npm run macos:dmg:background
 npm run macos:dmg:background:2x
 npm run macos:debug:dmg
@@ -23,6 +26,30 @@ Windows 包必须在 Windows 机器上构建，Linux 包必须在 Linux 机器�
 
 Windows 打包机需要安装 Visual Studio 的 `Desktop development with C++` 工作负载。Linux 打包机需要安装 Flutter Linux 桌面工具链依赖，例如 `clang`、`cmake`、`ninja-build`、`pkg-config`、`libgtk-3-dev`。
 
+## 依赖检查与 git hooks
+
+`npm run deps:check` 会运行 `scripts/check_outdated_deps.dart`，检查直接依赖和开发依赖是否都已是最新版本。CI 的 quality job 也会执行同一项检查。
+
+需要升级依赖时执行：
+
+```bash
+npm run deps:update
+flutter pub get
+```
+
+仓库自带 `.githooks/pre-commit` 和 `.githooks/pre-push`：
+
+- `pre-commit`：暂存区包含 `pubspec.yaml` 时检查依赖版本
+- `pre-push`：推送前检查依赖版本
+
+启用 hooks：
+
+```bash
+npm run hooks:install
+```
+
+临时跳过 pre-push 检查可以设置 `SKIP_OUTDATED_DEPS_CHECK=1`。如果只想记录问题而不让检查失败，可以设置 `ALLOW_OUTDATED_DEPS=1`。
+
 ## 跳过公证
 
 如果你只想本地快速出包验证，不走 Apple notarization，可以用这些命令：
@@ -35,6 +62,12 @@ npm run macos:release:zip:skip-notarization
 
 ## 每个脚本做什么
 
+- `deps:check`
+  运行 `scripts/check_outdated_deps.dart`，检查直接依赖和开发依赖是否都是最新版本
+- `deps:update`
+  执行 `flutter pub upgrade --major-versions`，把可升级的依赖更新到最新主版本
+- `hooks:install`
+  运行 `scripts/setup_git_hooks.sh`，把当前仓库的 `core.hooksPath` 指向 `.githooks`
 - `macos:dmg:background`
   生成 DMG 背景图，默认输出到 `packaging/macos/dmg-background.png` 和 `packaging/macos/dmg-background@2x.png`
 - `macos:debug:dmg`

@@ -326,10 +326,10 @@ class LiveMiseCliService implements MiseCliService {
       shellExecutable: shellExecutable,
     );
     final notices = <InlineNotice>[
-      if (remoteLoad.notice != null) remoteLoad.notice!,
+      ?remoteLoad.notice,
       if (windowsShimPath.isMissing)
         _buildWindowsShimPathNotice(tool.id, windowsShimPath),
-      if (pathConflictNotice != null) pathConflictNotice,
+      ?pathConflictNotice,
     ];
 
     return tool.copyWith(

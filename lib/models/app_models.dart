@@ -654,12 +654,10 @@ class DashboardSnapshot {
 enum HealthLevel { healthy, info, warning, critical }
 
 extension HealthLevelPresentation on HealthLevel {
-  String get label => tr(
-    switch (this) {
-      HealthLevel.healthy => 'Healthy',
-      HealthLevel.info => 'Info',
-      HealthLevel.warning => 'Warning',
-      HealthLevel.critical => 'Critical',
-    },
-  );
+  String get label => tr(switch (this) {
+    HealthLevel.healthy => 'Healthy',
+    HealthLevel.info => 'Info',
+    HealthLevel.warning => 'Warning',
+    HealthLevel.critical => 'Critical',
+  });
 }

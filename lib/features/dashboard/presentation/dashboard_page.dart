@@ -1189,7 +1189,7 @@ class _MetricHeader extends StatelessWidget {
         Expanded(
           child: Text(tr(label), style: Theme.of(context).textTheme.titleLarge),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }

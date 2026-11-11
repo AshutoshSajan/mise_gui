@@ -523,10 +523,7 @@ class LocalMiseProcessService implements MiseProcessService {
     final parent = Platform.environment;
     final shellEnvironmentResult = await _loadShellEnvironment();
     final shellEnvironment = shellEnvironmentResult.environment;
-    final mergedEnvironment = <String, String>{
-      ...parent,
-      if (shellEnvironment != null) ...shellEnvironment,
-    };
+    final mergedEnvironment = <String, String>{...parent, ...?shellEnvironment};
     final environment = <String, String>{};
     final pathEntries = <String>[];
 
@@ -764,7 +761,7 @@ void configureHttpClientProxy(
   final proxyEnvironment = <String, String>{
     ...Platform.environment,
     ...readConfiguredMiseProxyEnvironmentSync(),
-    if (environment != null) ...environment,
+    ...?environment,
   };
   client.findProxy = (uri) =>
       resolveHttpClientProxyConfiguration(uri, proxyEnvironment);

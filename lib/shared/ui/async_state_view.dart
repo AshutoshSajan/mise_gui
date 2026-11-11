@@ -43,7 +43,9 @@ class AsyncStateView<T> extends StatelessWidget {
                       ],
                     )
                   : Text(
-                      trArgs('Failed to load page: {error}', {'error': error.toString()}),
+                      trArgs('Failed to load page: {error}', {
+                        'error': error.toString(),
+                      }),
                     ),
             ),
           ),

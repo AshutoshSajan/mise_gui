@@ -73,7 +73,9 @@ class DashboardRepository {
           value: projects.isEmpty
               ? tr('Not configured')
               : overrideCount > 0
-              ? trArgs('{count, plural, one {# project} other {# projects}}', {'count': overrideProjectCount})
+              ? trArgs('{count, plural, one {# project} other {# projects}}', {
+                  'count': overrideProjectCount,
+                })
               : tr('No overrides'),
           caption: projects.isEmpty
               ? tr('No project directories configured for scanning yet.')
@@ -87,12 +89,14 @@ class DashboardRepository {
                   },
                 )
               : declaredToolCount > 0
-              ? trArgs('Scanned {count} projects; no global version overrides were found.', {
-                  'count': projects.length,
-                })
-              : trArgs('Scanned {count} projects; no project-level version declarations were found.', {
-                  'count': projects.length,
-                }),
+              ? trArgs(
+                  'Scanned {count} projects; no global version overrides were found.',
+                  {'count': projects.length},
+                )
+              : trArgs(
+                  'Scanned {count} projects; no project-level version declarations were found.',
+                  {'count': projects.length},
+                ),
           level: overrideCount > 0
               ? HealthLevel.warning
               : projects.isEmpty
@@ -473,7 +477,9 @@ if ($null -ne $disk) {
       }
       return _MiseVersionInfo(
         version: tr('Failed to load'),
-        detail: trArgs('Could not read the mise version: {error}', {'error': error}),
+        detail: trArgs('Could not read the mise version: {error}', {
+          'error': error,
+        }),
         level: HealthLevel.warning,
       );
     }

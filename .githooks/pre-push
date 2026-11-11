@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Block pushes while direct dependencies are behind their latest versions.
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+if [[ "${SKIP_OUTDATED_DEPS_CHECK:-0}" == "1" ]]; then
+  echo "SKIP_OUTDATED_DEPS_CHECK=1 is set; skipping the outdated dependency check."
+  exit 0
+fi
+
+if ! command -v dart >/dev/null 2>&1; then
+  echo "dart was not found; skipping the outdated dependency check." >&2
+  exit 0
+fi
+
+exec dart run scripts/check_outdated_deps.dart

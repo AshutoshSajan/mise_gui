@@ -185,7 +185,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
+        overrides: [
           appReleaseServiceProvider.overrideWithValue(
             const _FakeAppReleaseService(),
           ),
@@ -303,9 +303,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
-          miseCliServiceProvider.overrideWithValue(miseCliService),
-        ],
+        overrides: [miseCliServiceProvider.overrideWithValue(miseCliService)],
         child: MaterialApp(
           theme: AppTheme.light(),
           home: const Scaffold(body: ToolsPage()),
@@ -346,9 +344,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
-          miseCliServiceProvider.overrideWithValue(miseCliService),
-        ],
+        overrides: [miseCliServiceProvider.overrideWithValue(miseCliService)],
         child: MaterialApp(
           theme: AppTheme.light(),
           home: const Scaffold(body: ToolsPage()),
@@ -390,7 +386,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
+        overrides: [
           appReleaseServiceProvider.overrideWithValue(
             const _FakeAppReleaseService(),
           ),
@@ -425,7 +421,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
+        overrides: [
           appReleaseServiceProvider.overrideWithValue(
             const _FakeAppReleaseService(),
           ),
@@ -460,7 +456,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: <Override>[
+        overrides: [
           appReleaseServiceProvider.overrideWithValue(
             const _FakeAppReleaseService(),
           ),
