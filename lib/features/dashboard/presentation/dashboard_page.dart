@@ -7,6 +7,7 @@ import 'package:mise_gui/app/router/app_destination.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/dashboard/application/dashboard_provider.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_self_update_service.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
@@ -66,14 +67,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   Future<void> _handleRefresh() async {
     if (_refreshing) {
-      _showFeedback('正在刷新环境数据，请稍候。');
+      _showFeedback(tr('Refreshing environment data, please wait.'));
       return;
     }
 
     final now = DateTime.now();
     if (_lastRefreshAt != null &&
         now.difference(_lastRefreshAt!) < _refreshDebounce) {
-      _showFeedback('点击过于频繁，请 1 秒后再试。');
+      _showFeedback(tr('Too many clicks. Try again in a second.'));
       return;
     }
 
@@ -101,7 +102,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       final refreshed = ref.refresh(dashboardProvider.future);
       await refreshed;
       if (!silent) {
-        _showFeedback('环境数据已刷新。');
+        _showFeedback(tr('Environment data refreshed.'));
       }
     } catch (error) {
       if (!silent) {
@@ -143,9 +144,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   String _formatRefreshError(Object error) {
     if (isMiseCommandUnavailable(error)) {
-      return '刷新失败：未检测到 mise CLI。';
+      return tr('Refresh failed: mise CLI not found.');
     }
-    return '刷新失败，请稍后重试。';
+    return tr('Refresh failed. Please try again later.');
   }
 
   void _showFeedback(String message) {
@@ -159,12 +160,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final snapshot = ref.watch(dashboardProvider);
 
     return AsyncStateView(
       value: snapshot,
       builder: (data) => AppPageScaffold(
-        title: '环境总览',
+        title: tr('Environment overview'),
         description: '',
         actions: [
           OutlinedButton.icon(
@@ -176,7 +178,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh_rounded),
-            label: Text(_refreshing ? '刷新中...' : '刷新环境数据'),
+            label: Text(
+              _refreshing
+                  ? tr('Refreshing...')
+                  : tr('Refresh environment data'),
+            ),
           ),
         ],
         child: _DashboardOverview(snapshot: data),
@@ -214,9 +220,9 @@ class _DashboardMetricGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 20.0;
-        final systemMetric = _metricByLabel('当前系统');
+        final systemMetric = _metricByLabel('Current system');
         final compactMetrics = metrics
-            .where((metric) => metric.label != '当前系统')
+            .where((metric) => metric.label != 'Current system')
             .toList(growable: false);
 
         if (systemMetric == null) {
@@ -374,11 +380,15 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
       });
       _showFeedback(
         info.updateAvailable
-            ? '发现 mise ${info.latestVersion} 可用。'
-            : 'mise 已是最新版本。',
+            ? trArgs('mise {version} is available.', {
+                'version': info.latestVersion,
+              })
+            : tr('mise is up to date.'),
       );
     } catch (error) {
-      _showFeedback('检查 mise 更新失败，请稍后重试。');
+      _showFeedback(
+        tr('Failed to check for mise updates. Please try again later.'),
+      );
       if (mounted) {
         setState(() {
           _logs
@@ -402,19 +412,26 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('升级 mise'),
+        title: Text(tr('Upgrade mise')),
         content: Text(
-          '将执行 `${info.commandPreview}`，从 ${info.currentVersion} 升级到 ${info.latestVersion}。'
-          '\n\n已检测到安装来源：${info.installSourceLabel}。',
+          trArgs(
+            'This will run `{command}` to upgrade mise from {current} to {latest}.\n\nDetected install source: {source}.',
+            {
+              'command': info.commandPreview,
+              'current': info.currentVersion,
+              'latest': info.latestVersion,
+              'source': tr(info.installSourceLabel),
+            },
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('取消'),
+            child: Text(tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('开始升级'),
+            child: Text(tr('Start upgrade')),
           ),
         ],
       ),
@@ -454,8 +471,12 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
               command: info.commandPreview,
               timestamp: _formatNow(),
               detail: result.isSuccess
-                  ? '已通过界面执行 ${info.commandPreview}。'
-                  : '${info.commandPreview} 执行失败。',
+                  ? trArgs('Ran {command} from the app.', {
+                      'command': info.commandPreview,
+                    })
+                  : trArgs('{command} failed.', {
+                      'command': info.commandPreview,
+                    }),
               level: result.isSuccess
                   ? HealthLevel.healthy
                   : HealthLevel.warning,
@@ -476,7 +497,11 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
       setState(() {
         _appendLogs('exit ${result.exitCode}');
       });
-      _showFeedback(result.isSuccess ? 'mise 升级完成。' : 'mise 升级失败，已记录详情。');
+      _showFeedback(
+        result.isSuccess
+            ? tr('mise upgraded successfully.')
+            : tr('mise upgrade failed; details were recorded.'),
+      );
       ref.invalidate(dashboardProvider);
       if (result.isSuccess) {
         shouldRefreshAfterUpdate = true;
@@ -489,7 +514,7 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
             HistoryEntry(
               command: info.commandPreview,
               timestamp: _formatNow(),
-              detail: 'mise self-update 执行异常。',
+              detail: tr('mise self-update failed.'),
               level: HealthLevel.warning,
               status: HistoryStatus.failure,
               exitCode: -1,
@@ -502,7 +527,7 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
         setState(() {
           _appendLogs(error.toString());
         });
-        _showFeedback('mise 升级异常，已记录详情。');
+        _showFeedback(tr('mise upgrade error; details were recorded.'));
       }
     } finally {
       if (mounted) {
@@ -547,7 +572,7 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'mise 本体更新',
+                      tr('mise update'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
@@ -572,7 +597,9 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.refresh_rounded),
-                    label: Text(_checking ? '检查中...' : '检查更新'),
+                    label: Text(
+                      _checking ? tr('Checking...') : tr('Check for updates'),
+                    ),
                   ),
                   FilledButton.icon(
                     onPressed: updateAvailable && !_checking && !_updating
@@ -585,7 +612,9 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.upgrade_rounded),
-                    label: Text(_updating ? '升级中...' : '升级 mise'),
+                    label: Text(
+                      _updating ? tr('Upgrading...') : tr('Upgrade mise'),
+                    ),
                   ),
                 ],
               ),
@@ -606,15 +635,20 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
 
   String _statusText(MiseSelfUpdateInfo? info) {
     if (_updating) {
-      return '正在执行升级命令，请保持应用打开。';
+      return tr('Running the upgrade command. Keep the app open.');
     }
     if (info == null) {
-      return '检查当前 mise CLI 版本，并对比 GitHub 最新 release。';
+      return tr(
+        'Check the current mise CLI version against the latest GitHub release.',
+      );
     }
     if (info.updateAvailable) {
-      return '发现 ${info.tagName}，将通过 ${info.installSourceLabel} 在 GUI 内执行升级。';
+      return trArgs(
+        'Found {tag}; the upgrade will run in the GUI via {source}.',
+        {'tag': info.tagName, 'source': tr(info.installSourceLabel)},
+      );
     }
-    return '当前 mise 已是最新版本。';
+    return tr('mise is already up to date.');
   }
 
   void _appendLogs(String output) {
@@ -659,12 +693,16 @@ class _MiseUpdateVersionRow extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: [
-        _VersionChip(label: '当前', value: info.currentVersion),
-        _VersionChip(label: '最新', value: info.latestVersion),
-        _VersionChip(label: '来源', value: info.installSourceLabel),
-        _VersionChip(label: '命令', value: info.commandPreview, mono: true),
+        _VersionChip(label: tr('Current'), value: info.currentVersion),
+        _VersionChip(label: tr('Latest'), value: info.latestVersion),
+        _VersionChip(label: tr('Source'), value: tr(info.installSourceLabel)),
+        _VersionChip(
+          label: tr('Command'),
+          value: info.commandPreview,
+          mono: true,
+        ),
         if (!info.updateAvailable)
-          const _VersionChip(label: '状态', value: '无需升级')
+          _VersionChip(label: tr('Status'), value: tr('Up to date'))
         else if (info.usesPackageManager)
           Container(
             constraints: const BoxConstraints(maxWidth: 520),
@@ -675,7 +713,9 @@ class _MiseUpdateVersionRow extends StatelessWidget {
               border: Border.all(color: colors.border),
             ),
             child: Text(
-              '检测到包管理器安装，将直接调用系统升级命令。',
+              tr(
+                'Package-manager install detected; the system upgrade command will be used.',
+              ),
               style: TextStyle(color: colors.textMuted, height: 1.4),
             ),
           ),
@@ -709,7 +749,7 @@ class _VersionChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(color: colors.textMuted)),
+          Text(tr(label), style: TextStyle(color: colors.textMuted)),
           const SizedBox(width: 8),
           Text(
             value,
@@ -785,10 +825,13 @@ class _RecentHistoryPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('最近活动', style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    tr('Recent activity'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    '查看最近通过界面执行过的操作结果。',
+                    tr('Review results of operations run from the app.'),
                     style: TextStyle(color: colors.textMuted, height: 1.5),
                   ),
                 ],
@@ -798,7 +841,7 @@ class _RecentHistoryPanel extends StatelessWidget {
               TextButton.icon(
                 onPressed: () => showRecentHistoryDialog(context),
                 icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                label: const Text('查看全部'),
+                label: Text(tr('View all')),
               ),
           ],
         ),
@@ -813,7 +856,7 @@ class _RecentHistoryPanel extends StatelessWidget {
               border: Border.all(color: colors.border.withValues(alpha: 0.38)),
             ),
             child: Text(
-              '当前还没有最近操作记录。',
+              tr('No recent operations yet.'),
               style: TextStyle(color: colors.textMuted),
             ),
           )
@@ -851,7 +894,7 @@ class _DashboardMetricCard extends StatelessWidget {
     };
 
     const cardRadius = 20.0;
-    final child = metric.label == '当前系统'
+    final child = metric.label == 'Current system'
         ? _SystemMetricContent(metric: metric, accent: accent)
         : compact
         ? _CompactMetricContent(
@@ -880,10 +923,12 @@ class _DashboardMetricCard extends StatelessWidget {
     }
 
     return Tooltip(
-      message: '打开${destination.description}',
+      message: trArgs('Open {destination}', {
+        'destination': tr(destination.description),
+      }),
       child: Semantics(
         button: true,
-        label: '打开${metric.label}',
+        label: trArgs('Open {metric}', {'metric': tr(metric.label)}),
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(cardRadius),
@@ -899,9 +944,9 @@ class _DashboardMetricCard extends StatelessWidget {
 
   AppDestination? _destinationFor(String label) {
     switch (label) {
-      case '已装工具':
+      case 'Installed tools':
         return AppDestination.tools;
-      case '项目覆盖':
+      case 'Project overrides':
         return AppDestination.projects;
       default:
         return null;
@@ -910,9 +955,9 @@ class _DashboardMetricCard extends StatelessWidget {
 
   Key? _keyFor(String label) {
     switch (label) {
-      case '已装工具':
+      case 'Installed tools':
         return const ValueKey('dashboard-metric-tools');
-      case '项目覆盖':
+      case 'Project overrides':
         return const ValueKey('dashboard-metric-projects');
       default:
         return null;
@@ -958,7 +1003,7 @@ class _CompactMetricContent extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  metric.label,
+                  tr(metric.label),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleLarge,
@@ -1142,7 +1187,7 @@ class _MetricHeader extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(label, style: Theme.of(context).textTheme.titleLarge),
+          child: Text(tr(label), style: Theme.of(context).textTheme.titleLarge),
         ),
         if (trailing != null) trailing!,
       ],
@@ -1300,33 +1345,36 @@ class _SystemMetricDetails {
         chips.add(
           _SystemInfoChipData(label: 'Build', value: line.substring(6)),
         );
-      } else if (line.endsWith(' 架构')) {
+      } else if (line.endsWith(' arch') || line.endsWith(' 架构')) {
+        final suffixLength = line.endsWith(' arch') ? 5 : 3;
         chips.add(
           _SystemInfoChipData(
-            label: '架构',
-            value: line.substring(0, line.length - 3),
+            label: tr('Architecture'),
+            value: line.substring(0, line.length - suffixLength),
           ),
         );
-      } else if (line.startsWith('内存 ')) {
+      } else if (line.startsWith('Memory ') || line.startsWith('内存 ')) {
+        final prefixLength = line.startsWith('Memory ') ? 7 : 3;
         items.add(
           _SystemInfoItem(
-            label: '内存',
-            value: line.substring(3),
+            label: tr('Memory'),
+            value: line.substring(prefixLength),
             icon: Icons.memory_rounded,
           ),
         );
-      } else if (line.startsWith('磁盘 ')) {
+      } else if (line.startsWith('Disk ') || line.startsWith('磁盘 ')) {
+        final prefixLength = line.startsWith('Disk ') ? 5 : 3;
         items.add(
           _SystemInfoItem(
-            label: '磁盘',
-            value: line.substring(3),
+            label: tr('Disk'),
+            value: line.substring(prefixLength),
             icon: Icons.storage_rounded,
           ),
         );
       } else {
         items.add(
           _SystemInfoItem(
-            label: '处理器',
+            label: tr('Processor'),
             value: line,
             icon: Icons.developer_board_rounded,
             fullWidth: true,
@@ -1362,13 +1410,13 @@ class _SystemInfoItem {
 
 IconData _iconForMetric(String label) {
   switch (label) {
-    case '当前系统':
+    case 'Current system':
       return Icons.desktop_windows_rounded;
-    case '已装工具':
+    case 'Installed tools':
       return Icons.extension_rounded;
-    case '项目覆盖':
+    case 'Project overrides':
       return Icons.account_tree_rounded;
-    case 'Mise 版本':
+    case 'Mise version':
       return Icons.verified_rounded;
     default:
       return Icons.data_usage_rounded;

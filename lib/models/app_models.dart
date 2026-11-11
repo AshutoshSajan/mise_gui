@@ -1,3 +1,5 @@
+import 'package:mise_gui/l10n/app_localizations.dart';
+
 class SummaryMetric {
   const SummaryMetric({
     required this.label,
@@ -108,10 +110,10 @@ class HistoryEntry {
 
   String get outcomeLabel {
     return switch (status) {
-      HistoryStatus.canceled => '用户取消',
-      HistoryStatus.failure when exitCode == -1 => '执行异常',
-      HistoryStatus.failure => 'CLI 失败',
-      HistoryStatus.success => '执行成功',
+      HistoryStatus.canceled => tr('Canceled by user'),
+      HistoryStatus.failure when exitCode == -1 => tr('Execution error'),
+      HistoryStatus.failure => tr('CLI failed'),
+      HistoryStatus.success => tr('Succeeded'),
     };
   }
 
@@ -136,9 +138,9 @@ class HistoryEntry {
 }
 
 enum HistoryStatus {
-  success('成功'),
-  failure('失败'),
-  canceled('取消');
+  success('Success'),
+  failure('Failed'),
+  canceled('Canceled');
 
   const HistoryStatus(this.label);
 
@@ -652,10 +654,12 @@ class DashboardSnapshot {
 enum HealthLevel { healthy, info, warning, critical }
 
 extension HealthLevelPresentation on HealthLevel {
-  String get label => switch (this) {
-    HealthLevel.healthy => '正常',
-    HealthLevel.info => '提示',
-    HealthLevel.warning => '注意',
-    HealthLevel.critical => '风险',
-  };
+  String get label => tr(
+    switch (this) {
+      HealthLevel.healthy => 'Healthy',
+      HealthLevel.info => 'Info',
+      HealthLevel.warning => 'Warning',
+      HealthLevel.critical => 'Critical',
+    },
+  );
 }

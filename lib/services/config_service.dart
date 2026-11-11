@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 class _RuntimeSettingDefinition {
@@ -74,37 +75,38 @@ class LiveConfigService implements ConfigService {
   static const List<_RuntimeSettingDefinition> _runtimeSettingDefinitions = [
     _RuntimeSettingDefinition(
       key: 'http_timeout',
-      label: 'HTTP 超时',
+      label: 'HTTP timeout',
       defaultValue: '30s',
-      detail: '所有 HTTP 请求的超时时间。',
+      detail: 'Timeout for all HTTP requests.',
       type: ConfigRuntimeSettingType.string,
     ),
     _RuntimeSettingDefinition(
       key: 'fetch_remote_versions_timeout',
-      label: '远端版本超时',
+      label: 'Remote version timeout',
       defaultValue: '20s',
-      detail: '获取远端工具版本列表时的超时时间。',
+      detail: 'Timeout for fetching remote tool version lists.',
       type: ConfigRuntimeSettingType.string,
     ),
     _RuntimeSettingDefinition(
       key: 'http_retries',
-      label: 'HTTP 重试',
+      label: 'HTTP retries',
       defaultValue: '3',
-      detail: '网络临时失败时的重试次数，0 表示不重试。',
+      detail:
+          'Number of retries for transient network failures. 0 disables retries.',
       type: ConfigRuntimeSettingType.integer,
     ),
     _RuntimeSettingDefinition(
       key: 'offline',
-      label: '离线模式',
+      label: 'Offline mode',
       defaultValue: 'false',
-      detail: '开启后 mise 不会主动发起 HTTP 请求。',
+      detail: 'When enabled, mise will not make HTTP requests.',
       type: ConfigRuntimeSettingType.boolean,
     ),
     _RuntimeSettingDefinition(
       key: 'terminal_progress',
-      label: '终端进度',
+      label: 'Terminal progress',
       defaultValue: 'true',
-      detail: '控制 mise 是否输出终端进度指示。',
+      detail: 'Controls whether mise prints terminal progress indicators.',
       type: ConfigRuntimeSettingType.boolean,
     ),
   ];
@@ -113,30 +115,33 @@ class LiveConfigService implements ConfigService {
     _ProxySettingDefinition(
       key: 'http_proxy',
       aliases: ['http_proxy', 'HTTP_PROXY'],
-      label: 'HTTP 代理',
+      label: 'HTTP proxy',
       placeholder: 'http://127.0.0.1:7890',
-      detail: '用于 HTTP 下载请求，会同步写入 http_proxy 和 HTTP_PROXY。',
+      detail:
+          'Used for HTTP download requests and synchronized to http_proxy and HTTP_PROXY.',
     ),
     _ProxySettingDefinition(
       key: 'https_proxy',
       aliases: ['https_proxy', 'HTTPS_PROXY'],
-      label: 'HTTPS 代理',
+      label: 'HTTPS proxy',
       placeholder: 'http://127.0.0.1:7890',
-      detail: '用于 HTTPS 下载请求，会同步写入 https_proxy 和 HTTPS_PROXY。',
+      detail:
+          'Used for HTTPS download requests and synchronized to https_proxy and HTTPS_PROXY.',
     ),
     _ProxySettingDefinition(
       key: 'all_proxy',
       aliases: ['all_proxy', 'ALL_PROXY'],
-      label: '通用代理',
+      label: 'All proxy',
       placeholder: 'socks5://127.0.0.1:7890',
-      detail: '用于支持 ALL_PROXY 的下载器或工具链。',
+      detail: 'Used by downloaders or toolchains that support ALL_PROXY.',
     ),
     _ProxySettingDefinition(
       key: 'no_proxy',
       aliases: ['no_proxy', 'NO_PROXY'],
-      label: '不代理清单',
+      label: 'No proxy list',
       placeholder: 'localhost,127.0.0.1,*.local',
-      detail: '逗号分隔的直连主机或域名，会同步写入 no_proxy 和 NO_PROXY。',
+      detail:
+          'Comma-separated hosts or domains to bypass, synchronized to no_proxy and NO_PROXY.',
       requiresUri: false,
     ),
   ];
@@ -165,9 +170,6 @@ class LiveConfigService implements ConfigService {
       final projectDocumentName = resolvedProjectConfigPath == null
           ? null
           : _fileNameForPath(resolvedProjectConfigPath);
-      final projectDocumentTarget = projectName == null || projectName.isEmpty
-          ? '当前配置项目'
-          : projectName;
 
       final globalConfig = await _readFileIfExists(globalPath);
       final projectConfig = resolvedProjectConfigPath == null
@@ -175,29 +177,31 @@ class LiveConfigService implements ConfigService {
           : await _readFileIfExists(resolvedProjectConfigPath);
       final globalDocument = _buildDocument(
         id: 'global',
-        title: '全局 TOML',
+        title: 'Global TOML',
         path: globalPath,
         content: globalConfig,
-        description: '查看或编辑 ~/.config/mise/config.toml，这里通常决定全局默认工具链和基础设置。',
+        description:
+            'View or edit ~/.config/mise/config.toml, which usually defines the global default toolchain and base settings.',
       );
       final documents = <ConfigDocumentData>[globalDocument];
       if (resolvedProjectConfigPath != null && projectDocumentName != null) {
         documents.add(
           _buildDocument(
             id: 'workspace',
-            title: '项目配置',
+            title: 'Project config',
             path: resolvedProjectConfigPath,
             content: projectConfig,
             description:
-                '查看或编辑$projectDocumentTarget下的 $projectDocumentName，这里的版本声明会覆盖全局默认值。',
+                'View or edit the project config file. Version declarations here override global defaults.',
           ),
         );
       }
 
       sections.add(
         _buildToolsSection(
-          title: '全局工具',
-          description: '这里展示全局 [tools] 段里声明的版本策略，是大多数项目默认继承的起点。',
+          title: 'Global tools',
+          description:
+              'Shows version policies declared in the global [tools] section, which most projects inherit by default.',
           path: globalPath,
           content: globalConfig,
           sectionName: 'tools',
@@ -206,8 +210,9 @@ class LiveConfigService implements ConfigService {
 
       sections.add(
         _buildSettingsSection(
-          title: '运行时设置',
-          description: '把 settings、settings.java 和 env 里的常用参数整理成更易读的卡片。',
+          title: 'Runtime settings',
+          description:
+              'Presents common settings, settings.java, and env values as readable cards.',
           path: globalPath,
           content: globalConfig,
         ),
@@ -218,8 +223,9 @@ class LiveConfigService implements ConfigService {
       if (resolvedProjectConfigPath != null) {
         sections.add(
           _buildToolsSection(
-            title: '项目工具',
-            description: '只展示当前配置项目里的 [tools] 声明，帮助你一眼看出哪些版本是项目级锁定。',
+            title: 'Project tools',
+            description:
+                'Shows only [tools] declarations in the current config project so project-level pins stand out.',
             path: resolvedProjectConfigPath,
             content: projectConfig,
             sectionName: 'tools',
@@ -255,28 +261,26 @@ class LiveConfigService implements ConfigService {
       final projectDocumentName = resolvedProjectConfigPath == null
           ? null
           : _fileNameForPath(resolvedProjectConfigPath);
-      final projectDocumentTarget = projectName == null || projectName.isEmpty
-          ? '当前配置项目'
-          : projectName;
 
       final documents = <ConfigDocumentData>[
         _buildDocument(
           id: 'global',
-          title: '全局 TOML',
+          title: 'Global TOML',
           path: globalPath,
           content: null,
-          description: '查看或编辑 ~/.config/mise/config.toml，这里通常决定全局默认工具链和基础设置。',
+          description:
+              'View or edit ~/.config/mise/config.toml, which usually defines the global default toolchain and base settings.',
         ),
       ];
       if (resolvedProjectConfigPath != null && projectDocumentName != null) {
         documents.add(
           _buildDocument(
             id: 'workspace',
-            title: '项目配置',
+            title: 'Project config',
             path: resolvedProjectConfigPath,
             content: null,
             description:
-                '查看或编辑$projectDocumentTarget下的 $projectDocumentName，这里的版本声明会覆盖全局默认值。',
+                'View or edit the project config file. Version declarations here override global defaults.',
           ),
         );
       }
@@ -284,14 +288,16 @@ class LiveConfigService implements ConfigService {
       return ConfigWorkspaceData(
         sections: [
           ConfigSectionData(
-            title: '读取失败',
-            description: '这次没有成功读取配置文件，先保留路径信息，方便继续排查。',
+            title: 'Failed to load',
+            description:
+                'Could not read the configuration file this time. Path information is kept for troubleshooting.',
             rawSnippet: error.toString(),
             items: const [
               ConfigItem(
-                label: '当前状态',
-                value: '暂不可读',
-                detail: '请确认配置文件权限、路径和磁盘状态后再刷新。',
+                label: 'Current status',
+                value: 'Unavailable',
+                detail:
+                    'Check file permissions, path, and disk state, then refresh.',
                 level: HealthLevel.warning,
                 isEditable: false,
               ),
@@ -324,8 +330,8 @@ class LiveConfigService implements ConfigService {
       ),
       commandPreview: [
         'cat ${document.path}',
-        '# 图形界面文件写回预览',
-        '# 将直接写入 ${document.path}',
+        tr('# GUI file save preview'),
+        trArgs('# Writes directly to {path}', {'path': document.path}),
       ].join('\n'),
       hasChanges: hasChanges,
       createsFile: !document.exists,
@@ -478,7 +484,10 @@ class LiveConfigService implements ConfigService {
       path: path,
       content: content ?? '',
       description: description,
-      commandPreview: ['cat $path', '# 通过图形界面直接编辑文件'].join('\n'),
+      commandPreview: [
+        'cat $path',
+        tr('# Edit file directly from the GUI'),
+      ].join('\n'),
       exists: content != null,
     );
   }
@@ -493,7 +502,9 @@ class LiveConfigService implements ConfigService {
     final section = _extractSection(content, sectionName);
     final entries = _parseAssignments(section);
     final summary = entries.isEmpty
-        ? '该文件里暂时没有 [$sectionName] 段。'
+        ? trArgs('No [{section}] section in this file.', {
+            'section': sectionName,
+          })
         : entries.entries
               .map((entry) => '${entry.key} = ${entry.value}')
               .join('\n');
@@ -502,10 +513,14 @@ class LiveConfigService implements ConfigService {
       title: title,
       description: description,
       rawSnippet:
-          section ?? '# 未找到 [$sectionName] 段\n${content?.trim() ?? path}',
+          section ??
+          trArgs('# [{section}] section not found\n{content}', {
+            'section': sectionName,
+            'content': content?.trim() ?? path,
+          }),
       items: [
         ConfigItem(
-          label: '已声明工具',
+          label: 'Declared tools',
           value: '${entries.length}',
           detail: summary,
           level: entries.isEmpty ? HealthLevel.info : HealthLevel.healthy,
@@ -539,43 +554,50 @@ class LiveConfigService implements ConfigService {
       title: title,
       description: description,
       rawSnippet: snippetParts.isEmpty
-          ? '# 未找到 [settings] 相关配置\n${content?.trim() ?? path}'
+          ? trArgs('# No [settings] configuration found\n{content}', {
+              'content': content?.trim() ?? path,
+            })
           : snippetParts.join('\n\n'),
       items: [
         ConfigItem(
-          label: 'HTTP 超时',
-          value: settings['http_timeout'] ?? '未设置',
-          detail: '控制下载类请求的超时时间，后续保存前会提供差异预览。',
+          label: 'HTTP timeout',
+          value: settings['http_timeout'] ?? 'Not set',
+          detail:
+              'Controls the timeout for download requests; a diff preview is shown before saving.',
           level: settings.containsKey('http_timeout')
               ? HealthLevel.healthy
               : HealthLevel.info,
           isEditable: content != null,
         ),
         ConfigItem(
-          label: 'HTTP 重试',
-          value: settings['http_retries'] ?? '未设置',
-          detail: '决定网络失败时的自动重试次数。',
+          label: 'HTTP retries',
+          value: settings['http_retries'] ?? 'Not set',
+          detail: 'Number of automatic retries when the network fails.',
           level: settings.containsKey('http_retries')
               ? HealthLevel.healthy
               : HealthLevel.info,
           isEditable: content != null,
         ),
         ConfigItem(
-          label: 'Java 发行版',
-          value: javaSettings['shorthand_vendor'] ?? '未设置',
+          label: 'Java distribution',
+          value: javaSettings['shorthand_vendor'] ?? 'Not set',
           detail: javaSettings.containsKey('shorthand_vendor')
-              ? '当前默认 JDK 发行版已从文件直接读出。'
-              : '当前没有在 settings.java 中声明 shorthand_vendor。',
+              ? 'The current default JDK distribution was read from the file.'
+              : 'shorthand_vendor is not declared in settings.java.',
           level: javaSettings.containsKey('shorthand_vendor')
               ? HealthLevel.healthy
               : HealthLevel.info,
           isEditable: content != null,
         ),
         ConfigItem(
-          label: '代理环境变量',
-          value: env.isEmpty ? '未配置' : '${env.length} 项',
+          label: 'Proxy environment variables',
+          value: env.isEmpty
+              ? 'Not configured'
+              : trArgs('{count, plural, one {# item} other {# items}}', {
+                  'count': env.length,
+                }),
           detail: env.isEmpty
-              ? '当前配置文件没有 env 代理项。'
+              ? 'No proxy entries in the current configuration file.'
               : env.entries
                     .map((entry) => '${entry.key}=${entry.value}')
                     .join(', '),
@@ -601,16 +623,21 @@ class LiveConfigService implements ConfigService {
         .join(', ');
 
     return ConfigSectionData(
-      title: 'Java 别名',
-      description: '别名决定了像 java@17 这样的写法最终会落到哪个发行版，是很适合做可视化说明的一层配置。',
+      title: 'Java aliases',
+      description:
+          'Aliases determine which distribution a reference like java@17 resolves to, and are well suited to a visual configuration layer.',
       rawSnippet:
           _extractSection(content, 'tool_alias.java.versions') ??
-          '# 未找到 [tool_alias.java.versions] 段\n${content?.trim() ?? path}',
+          trArgs('# [tool_alias.java.versions] section not found\n{content}', {
+            'content': content?.trim() ?? path,
+          }),
       items: [
         ConfigItem(
-          label: '别名数量',
+          label: 'Alias count',
           value: '${aliases.length}',
-          detail: aliases.isEmpty ? '当前没有配置 Java 版本别名。' : preview,
+          detail: aliases.isEmpty
+              ? 'No Java version aliases configured.'
+              : preview,
           level: aliases.isEmpty ? HealthLevel.info : HealthLevel.healthy,
           isEditable: content != null,
         ),
@@ -883,7 +910,7 @@ class LiveConfigService implements ConfigService {
     required String path,
   }) {
     if (before == after) {
-      return ['--- $path', '+++ $path', '# 内容没有变化'].join('\n');
+      return ['--- $path', '+++ $path', tr('# No content changes')].join('\n');
     }
 
     final beforeLines = const LineSplitter().convert(before);
@@ -913,10 +940,12 @@ class LiveConfigService implements ConfigService {
     final diff = <String>[
       '--- $path',
       '+++ $path',
-      if (prefix > 0) '@@ ... 前面还有 $prefix 行未变化 @@',
+      if (prefix > 0)
+        trArgs('@@ ... {count} lines before unchanged @@', {'count': prefix}),
       ...changedBefore.map((line) => '- $line'),
       ...changedAfter.map((line) => '+ $line'),
-      if (suffix > 0) '@@ ... 后面还有 $suffix 行未变化 @@',
+      if (suffix > 0)
+        trArgs('@@ ... {count} lines after unchanged @@', {'count': suffix}),
     ];
 
     return diff.join('\n');

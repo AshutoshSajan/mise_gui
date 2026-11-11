@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 import 'package:mise_gui/services/mise_query_service.dart';
@@ -281,7 +282,9 @@ class LiveProjectScanService implements ProjectScanService {
     } on MiseProcessException catch (error) {
       scanIssue = _describeScanIssue(error);
     } catch (_) {
-      scanIssue = '暂时无法解析 mise 的生效版本，已按项目文件里的声明继续展示。';
+      scanIssue = tr(
+        'Could not resolve the effective mise version yet; project file declarations are shown instead.',
+      );
     }
 
     final activeVersions = <String, MiseInstalledToolVersionRef>{};
@@ -308,8 +311,8 @@ class LiveProjectScanService implements ProjectScanService {
           projectAssignments[toolName] ??
           active?.requestedVersion ??
           active?.version ??
-          '未设置';
-      final globalVersion = globalAssignments[toolName] ?? '未设置';
+          tr('Not set');
+      final globalVersion = globalAssignments[toolName] ?? tr('Not set');
       final source = declaredInProject
           ? _formatProjectSource(projectSources[toolName])
           : _formatSource(active?.source?.path, config.primaryPath);
@@ -370,10 +373,19 @@ class LiveProjectScanService implements ProjectScanService {
     String? scanIssue,
   }) {
     final base = switch ((overrides, projectOnlyTools, declaredTools)) {
-      (> 0, _, _) => '当前项目有 $overrides 个工具版本不同于全局配置。',
-      (0, > 0, _) => '当前项目有 $projectOnlyTools 个工具只在项目中声明。',
-      (0, 0, 0) => '当前项目没有项目级工具声明。',
-      _ => '当前项目有 $declaredTools 个工具声明，与全局默认值保持一致。',
+      (> 0, _, _) => trArgs(
+        '{count, plural, one {# tool version differs from the global configuration in this project.} other {# tool versions differ from the global configuration in this project.}}',
+        {'count': overrides},
+      ),
+      (0, > 0, _) => trArgs(
+        '{count, plural, one {# tool is declared only in this project.} other {# tools are declared only in this project.}}',
+        {'count': projectOnlyTools},
+      ),
+      (0, 0, 0) => tr('This project has no project-level tool declarations.'),
+      _ => trArgs(
+        '{count, plural, one {This project has # tool declaration matching the global default.} other {This project has # tool declarations matching the global defaults.}}',
+        {'count': declaredTools},
+      ),
     };
 
     if (scanIssue == null || scanIssue.isEmpty) {
@@ -385,9 +397,13 @@ class LiveProjectScanService implements ProjectScanService {
   String _describeScanIssue(MiseProcessException error) {
     final stderr = error.result.stderr.toLowerCase();
     if (stderr.contains('not trusted')) {
-      return '这个项目的配置文件还没有被 mise trust，当前按文件声明展示版本。';
+      return tr(
+        'This project configuration has not been trusted by mise yet; versions are shown from file declarations.',
+      );
     }
-    return '暂时无法解析 mise 的生效版本，已按项目文件里的声明继续展示。';
+    return tr(
+      'Could not resolve the effective mise version yet; project file declarations are shown instead.',
+    );
   }
 
   String _globalConfigPath() {
@@ -416,14 +432,19 @@ class LiveProjectScanService implements ProjectScanService {
       final modifiedAt = modifiedTimes.first;
       final elapsed = DateTime.now().difference(modifiedAt);
       if (elapsed.inMinutes < 1) {
-        return '刚刚';
+        return tr('Just now');
       }
       if (elapsed.inHours < 1) {
-        return '${elapsed.inMinutes} 分钟前';
+        return trArgs(
+          '{count, plural, one {# minute ago} other {# minutes ago}}',
+          {'count': elapsed.inMinutes},
+        );
       }
-      return '${elapsed.inHours} 小时前';
+      return trArgs('{count, plural, one {# hour ago} other {# hours ago}}', {
+        'count': elapsed.inHours,
+      });
     } catch (_) {
-      return '最近';
+      return tr('Recently');
     }
   }
 
@@ -571,26 +592,26 @@ class LiveProjectScanService implements ProjectScanService {
 
   String _formatSource(String? sourcePath, String workspaceConfigPath) {
     if (sourcePath == null || sourcePath.isEmpty) {
-      return '继承';
+      return 'Inherited';
     }
     if (sourcePath == workspaceConfigPath) {
-      return '项目';
+      return 'Project';
     }
     if (sourcePath.contains('/.config/mise/')) {
-      return '全局';
+      return 'Global';
     }
-    return '解析结果';
+    return 'Resolved';
   }
 
   String _formatProjectSource(String? sourcePath) {
     if (sourcePath == null || sourcePath.isEmpty) {
-      return '项目';
+      return 'Project';
     }
     final fileName = _basename(sourcePath);
     if (fileName == 'mise.toml') {
-      return '项目';
+      return 'Project';
     }
-    return '项目 $fileName';
+    return 'Project $fileName';
   }
 
   String _normalizeToolName(String tool) {
@@ -612,13 +633,13 @@ class LiveProjectScanService implements ProjectScanService {
   String _resolveEnvironment(Iterable<String> tools) {
     final toolSet = tools.toSet();
     if (toolSet.contains('flutter')) {
-      return 'Flutter 桌面环境';
+      return tr('Flutter desktop environment');
     }
     if (toolSet.contains('node')) {
-      return 'Node 工作区';
+      return tr('Node workspace');
     }
     if (toolSet.contains('python') && toolSet.contains('go')) {
-      return 'Python 与 Go';
+      return tr('Python and Go');
     }
     if (toolSet.contains('python')) {
       return 'Python';
@@ -626,7 +647,7 @@ class LiveProjectScanService implements ProjectScanService {
     if (toolSet.contains('java')) {
       return 'Java';
     }
-    return 'mise 工作区';
+    return tr('mise workspace');
   }
 
   String _basename(String path) {

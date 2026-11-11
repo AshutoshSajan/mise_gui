@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 class InlineNoticeBar extends StatelessWidget {
@@ -59,7 +60,7 @@ class InlineNoticeBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  notice.title,
+                  tr(notice.title),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -67,7 +68,7 @@ class InlineNoticeBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  notice.message,
+                  tr(notice.message),
                   style: TextStyle(color: colors.textMuted, height: 1.45),
                 ),
               ],

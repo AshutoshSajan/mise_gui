@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/router/app_destination.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/shared/ui/app_backdrop.dart';
 import 'package:mise_gui/shared/ui/app_panel.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
@@ -22,6 +23,7 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLanguageProvider);
     final destination = AppDestination.values[navigationShell.currentIndex];
     final colors = AppTheme.colorsOf(context);
     final miseAvailableValue = ref.watch(miseAvailableProvider);
@@ -44,7 +46,9 @@ class AppShell extends ConsumerWidget {
           appBar: compact
               ? AppBar(
                   title: _WindowChromeDoubleTapRegion(
-                    child: Text(isMissingMise ? '安装 mise' : destination.label),
+                    child: Text(
+                      tr(isMissingMise ? 'Install mise' : destination.label),
+                    ),
                   ),
                   actions: const [
                     Padding(
@@ -247,12 +251,14 @@ class _Sidebar extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      '本地环境统一管理',
+                                      tr('Local environments, unified'),
                                       style: TextStyle(color: colors.textMuted),
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
-                                      '集中管理常用语言、工具链和项目版本差异。',
+                                      tr(
+                                        'Manage languages, toolchains, and project version differences in one place.',
+                                      ),
                                       style: TextStyle(
                                         color: colors.textMuted,
                                         fontSize: 13,
@@ -269,7 +275,7 @@ class _Sidebar extends ConsumerWidget {
                                         _RuntimePill(label: 'Go'),
                                         _RuntimePill(label: 'Node'),
                                         _RuntimePill(label: 'Flutter'),
-                                        _RuntimePill(label: '更多工具链'),
+                                        _RuntimePill(label: 'More toolchains'),
                                       ],
                                     ),
                                     if (locked) ...[
@@ -302,7 +308,9 @@ class _Sidebar extends ConsumerWidget {
                                             const SizedBox(width: 10),
                                             Expanded(
                                               child: Text(
-                                                '先安装 mise，左侧导航会自动解锁。',
+                                                tr(
+                                                  'Install mise first to unlock the sidebar.',
+                                                ),
                                                 style: TextStyle(
                                                   color: colors.textPrimary,
                                                   fontSize: 12,
@@ -379,7 +387,10 @@ class _SidebarFooter extends StatelessWidget {
     if (expanded) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: Text('版本 $versionLabel', style: style),
+        child: Text(
+          trArgs('Version {versionLabel}', {'versionLabel': versionLabel}),
+          style: style,
+        ),
       );
     }
 
@@ -419,7 +430,7 @@ class _SidebarDestination extends StatelessWidget {
     final colors = AppTheme.colorsOf(context);
 
     return Tooltip(
-      message: destination.label,
+      message: tr(destination.label),
       child: Material(
         color: selected
             ? colors.accent.withValues(alpha: 0.14)
@@ -476,7 +487,7 @@ class _SidebarDestination extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          destination.label,
+                          tr(destination.label),
                           style: TextStyle(
                             color: locked
                                 ? colors.textMuted
@@ -488,7 +499,7 @@ class _SidebarDestination extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          destination.description,
+                          tr(destination.description),
                           style: TextStyle(
                             color: colors.textMuted,
                             fontSize: 12,
@@ -593,34 +604,110 @@ class _ToolbarGlassGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLanguageProvider);
     final themePreference = ref.watch(themePreferenceProvider);
 
     return _ToolbarGlassPanel(
       padding: const EdgeInsets.all(6),
-      child: SegmentedButton<AppThemePreference>(
-        showSelectedIcon: false,
-        segments: const [
-          ButtonSegment<AppThemePreference>(
-            value: AppThemePreference.system,
-            icon: Icon(Icons.brightness_auto_rounded),
-            label: Text('系统'),
-          ),
-          ButtonSegment<AppThemePreference>(
-            value: AppThemePreference.light,
-            icon: Icon(Icons.light_mode_rounded),
-            label: Text('浅色'),
-          ),
-          ButtonSegment<AppThemePreference>(
-            value: AppThemePreference.dark,
-            icon: Icon(Icons.dark_mode_rounded),
-            label: Text('深色'),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _LanguageMenu(),
+          const SizedBox(width: 6),
+          SegmentedButton<AppThemePreference>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment<AppThemePreference>(
+                value: AppThemePreference.system,
+                icon: const Icon(Icons.brightness_auto_rounded),
+                label: Text(tr('System')),
+              ),
+              ButtonSegment<AppThemePreference>(
+                value: AppThemePreference.light,
+                icon: const Icon(Icons.light_mode_rounded),
+                label: Text(tr('Light')),
+              ),
+              ButtonSegment<AppThemePreference>(
+                value: AppThemePreference.dark,
+                icon: const Icon(Icons.dark_mode_rounded),
+                label: Text(tr('Dark')),
+              ),
+            ],
+            selected: {themePreference},
+            onSelectionChanged: (selection) {
+              final nextPreference = selection.first;
+              ref.read(themePreferenceProvider.notifier).state = nextPreference;
+            },
           ),
         ],
-        selected: {themePreference},
-        onSelectionChanged: (selection) {
-          final nextPreference = selection.first;
-          ref.read(themePreferenceProvider.notifier).state = nextPreference;
-        },
+      ),
+    );
+  }
+}
+
+class _LanguageMenu extends ConsumerWidget {
+  const _LanguageMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(appLanguageProvider);
+    final colors = AppTheme.colorsOf(context);
+    final useChinese = AppLocalizations.current.isChinese;
+
+    return PopupMenuButton<AppLanguage>(
+      tooltip: tr('Language'),
+      initialValue: language,
+      onSelected: (value) {
+        ref.read(appLanguageProvider.notifier).state = value;
+      },
+      itemBuilder: (context) => [
+        for (final option in AppLanguage.values)
+          PopupMenuItem<AppLanguage>(
+            value: option,
+            child: Row(
+              children: [
+                Icon(
+                  option == AppLanguage.system
+                      ? Icons.settings_suggest_rounded
+                      : Icons.translate_rounded,
+                  size: 18,
+                  color: option == language ? colors.accent : colors.textMuted,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    appLanguageLabel(option),
+                    style: TextStyle(
+                      fontWeight: option == language
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (option == language)
+                  Icon(Icons.check_rounded, size: 18, color: colors.accent),
+              ],
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.translate_rounded, size: 18, color: colors.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              useChinese ? '中文' : 'EN',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -708,7 +795,7 @@ class _RuntimePill extends StatelessWidget {
         border: Border.all(color: colors.borderStrong.withValues(alpha: 0.2)),
       ),
       child: Text(
-        label,
+        tr(label),
         style: TextStyle(
           color: colors.textPrimary,
           fontSize: 11,
@@ -737,10 +824,13 @@ class _ShellLoadingView extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 3),
           ),
           const SizedBox(height: 18),
-          Text('正在检查 mise 是否可用', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            tr('Checking if mise is available'),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           Text(
-            '稍等一下，我们先确认当前设备能否直接调用 mise CLI。',
+            tr('Hang tight while we confirm this device can run the mise CLI.'),
             style: TextStyle(color: colors.textMuted),
           ),
         ],
@@ -766,14 +856,14 @@ class _MissingMiseExperienceState
 
   Future<void> _handleRetry() async {
     if (_retrying) {
-      _showFeedback('正在重新检测，请稍候。');
+      _showFeedback(tr('Checking again, please wait.'));
       return;
     }
 
     final now = DateTime.now();
     if (_lastRetryAt != null &&
         now.difference(_lastRetryAt!) < _retryDebounce) {
-      _showFeedback('点击过于频繁，请 1 秒后再试。');
+      _showFeedback(tr('Too many clicks. Try again in a second.'));
       return;
     }
 
@@ -782,9 +872,11 @@ class _MissingMiseExperienceState
 
     try {
       final available = await ref.refresh(miseAvailableProvider.future);
-      _showFeedback(available ? '已检测到 mise CLI。' : '还没有检测到 mise CLI。');
+      _showFeedback(
+        tr(available ? 'mise CLI detected.' : 'mise CLI not detected yet.'),
+      );
     } catch (_) {
-      _showFeedback('重新检测失败，请稍后重试。');
+      _showFeedback(tr('Re-check failed. Please try again later.'));
     } finally {
       if (mounted) {
         setState(() => _retrying = false);
@@ -849,7 +941,11 @@ class _MissingMiseExperienceState
                         return;
                       }
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('安装命令已复制到剪贴板。')),
+                        SnackBar(
+                          content: Text(
+                            tr('Install command copied to clipboard.'),
+                          ),
+                        ),
                       );
                     },
                     onRetry: _handleRetry,
@@ -916,10 +1012,15 @@ class _MissingHeroText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('这台电脑还没有安装 mise', style: Theme.of(context).textTheme.displaySmall),
+        Text(
+          tr('mise is not installed on this computer'),
+          style: Theme.of(context).textTheme.displaySmall,
+        ),
         const SizedBox(height: 14),
         Text(
-          'Mise GUI 依赖可用的 mise CLI 才能读取工具版本、项目覆盖关系和全局配置。先完成安装，右侧这些功能就会自动解锁。',
+          tr(
+            'Mise GUI needs a working mise CLI to read tool versions, project overrides, and global config. Install it and the features on the right will unlock.',
+          ),
           style: TextStyle(color: colors.textMuted, fontSize: 16, height: 1.65),
         ),
         const SizedBox(height: 24),
@@ -953,12 +1054,16 @@ class _MissingHeroText extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$platformLabel 推荐安装方式',
+                          trArgs('Recommended install for {platformLabel}', {
+                            'platformLabel': platformLabel,
+                          }),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '先安装，再点击右侧“重新检测”，应用就会进入正常视图。',
+                          tr(
+                            'Install, then click "Check again" on the right to enter the app.',
+                          ),
                           style: TextStyle(
                             color: colors.textMuted,
                             height: 1.45,
@@ -972,20 +1077,23 @@ class _MissingHeroText extends StatelessWidget {
               const SizedBox(height: 18),
               const _StepRow(
                 index: '01',
-                title: '执行安装命令',
-                description: '使用右侧命令在当前系统安装 mise。',
+                title: 'Run the install command',
+                description:
+                    'Use the command on the right to install mise on this system.',
               ),
               const SizedBox(height: 12),
               const _StepRow(
                 index: '02',
-                title: '确认 CLI 可用',
-                description: '安装完成后，先运行 `mise --version` 验证命令是否生效。',
+                title: 'Verify the CLI works',
+                description:
+                    'After installing, run `mise --version` to verify the command works.',
               ),
               const SizedBox(height: 12),
               const _StepRow(
                 index: '03',
-                title: '回到应用重新检测',
-                description: '安装完成后点击“重新检测”，左侧导航和完整页面会自动恢复。',
+                title: 'Return to the app and check again',
+                description:
+                    'After installing, click "Check again" to restore the sidebar and full pages.',
               ),
             ],
           ),
@@ -1024,10 +1132,15 @@ class _InstallCommandCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('安装命令', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      tr('Install command'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      '复制后在终端执行。安装完成后，不需要重新配置这个页面。',
+                      tr(
+                        'Copy and run it in a terminal. No further setup is needed on this page.',
+                      ),
                       style: TextStyle(color: colors.textMuted, height: 1.45),
                     ),
                   ],
@@ -1061,7 +1174,7 @@ class _InstallCommandCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            '安装完成后建议再执行一次：`mise --version`',
+            tr('After installing, run `mise --version` once more.'),
             style: TextStyle(
               color: colors.textMuted,
               fontSize: 13,
@@ -1076,7 +1189,7 @@ class _InstallCommandCard extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onCopy,
                 icon: const Icon(Icons.content_copy_rounded),
-                label: const Text('复制安装命令'),
+                label: Text(tr('Copy install command')),
               ),
               OutlinedButton.icon(
                 onPressed: onRetry,
@@ -1087,7 +1200,7 @@ class _InstallCommandCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh_rounded),
-                label: Text(retrying ? '检测中...' : '重新检测'),
+                label: Text(tr(retrying ? 'Checking...' : 'Check again')),
               ),
             ],
           ),
@@ -1115,10 +1228,15 @@ class _MissingMiseFooterBand extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('安装完成后你会立刻看到', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            tr('Available as soon as mise is installed'),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           Text(
-            '环境总览、工具版本和全局配置都会自动接入，不需要再额外配置页面。',
+            tr(
+              'Environment overview, tool versions, and global config connect automatically.',
+            ),
             style: TextStyle(color: colors.textMuted, height: 1.55),
           ),
           const SizedBox(height: 18),
@@ -1130,24 +1248,27 @@ class _MissingMiseFooterBand extends StatelessWidget {
                 width: 280,
                 child: _FooterFeatureTile(
                   icon: Icons.space_dashboard_rounded,
-                  title: '环境总览',
-                  description: '活跃工具、PATH 导出和整体健康评分会直接显示。',
+                  title: 'Environment overview',
+                  description:
+                      'Active tools, PATH exports, and an overall health score appear immediately.',
                 ),
               ),
               SizedBox(
                 width: 280,
                 child: _FooterFeatureTile(
                   icon: Icons.handyman_rounded,
-                  title: '工具版本',
-                  description: '已安装版本、当前生效版本和来源关系会自动读出。',
+                  title: 'Tool versions',
+                  description:
+                      'Installed versions, active versions, and sources are detected automatically.',
                 ),
               ),
               SizedBox(
                 width: 320,
                 child: _FooterFeatureTile(
                   icon: Icons.tune_rounded,
-                  title: '全局配置',
-                  description: '当前默认版本和配置文件内容会直接读出。',
+                  title: 'Global config',
+                  description:
+                      'Default versions and config file contents are read automatically.',
                 ),
               ),
             ],
@@ -1198,10 +1319,10 @@ class _FooterFeatureTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                Text(tr(title), style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 6),
                 Text(
-                  description,
+                  tr(description),
                   style: TextStyle(color: colors.textMuted, height: 1.5),
                 ),
               ],
@@ -1254,10 +1375,10 @@ class _StepRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Text(tr(title), style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                description,
+                tr(description),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
             ],
@@ -1278,5 +1399,5 @@ String _currentPlatformLabel() {
   if (Platform.isLinux) {
     return 'Linux';
   }
-  return '当前系统';
+  return tr('Current system');
 }

@@ -10,6 +10,7 @@ import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/dashboard/application/dashboard_provider.dart';
 import 'package:mise_gui/features/projects/application/projects_provider.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 import 'package:mise_gui/shared/ui/app_page_scaffold.dart';
@@ -39,21 +40,33 @@ ScanDirectoryRisk? scanDirectoryRiskForPath(String path) {
 
   final windowsDriveRoot = RegExp(r'^[a-z]:/$').hasMatch(normalized);
   if (windowsDriveRoot) {
-    return ScanDirectoryRisk(path: path, message: '你选择的是 Windows 磁盘根目录。');
+    return ScanDirectoryRisk(
+      path: path,
+      message: tr('You selected a Windows drive root.'),
+    );
   }
 
   final uncRoot = RegExp(r'^//[^/]+/[^/]+$').hasMatch(normalized);
   if (uncRoot) {
-    return ScanDirectoryRisk(path: path, message: '你选择的是整个网络共享根目录。');
+    return ScanDirectoryRisk(
+      path: path,
+      message: tr('You selected a network share root.'),
+    );
   }
 
   if (normalized == '/') {
-    return ScanDirectoryRisk(path: path, message: '你选择的是系统根目录。');
+    return ScanDirectoryRisk(
+      path: path,
+      message: tr('You selected the system root directory.'),
+    );
   }
 
   if (normalized == '/volumes' ||
       RegExp(r'^/volumes/[^/]+$').hasMatch(normalized)) {
-    return ScanDirectoryRisk(path: path, message: '你选择的是 macOS 磁盘卷根目录。');
+    return ScanDirectoryRisk(
+      path: path,
+      message: tr('You selected a macOS volume root.'),
+    );
   }
 
   final linuxMountRoot =
@@ -61,7 +74,10 @@ ScanDirectoryRisk? scanDirectoryRiskForPath(String path) {
       RegExp(r'^/media/[^/]+/[^/]+$').hasMatch(normalized) ||
       RegExp(r'^/run/media/[^/]+/[^/]+$').hasMatch(normalized);
   if (linuxMountRoot) {
-    return ScanDirectoryRisk(path: path, message: '你选择的是 Linux 挂载磁盘根目录。');
+    return ScanDirectoryRisk(
+      path: path,
+      message: tr('You selected a Linux mount root.'),
+    );
   }
 
   return null;
@@ -85,14 +101,14 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
 
   Future<void> _handleRefresh() async {
     if (_refreshing) {
-      _showFeedback('正在扫描目录，请稍候。');
+      _showFeedback(tr('Scanning directories, please wait.'));
       return;
     }
 
     final now = DateTime.now();
     if (_lastRefreshAt != null &&
         now.difference(_lastRefreshAt!) < _refreshDebounce) {
-      _showFeedback('点击过于频繁，请 1 秒后再试。');
+      _showFeedback(tr('Too many clicks. Try again in a second.'));
       return;
     }
 
@@ -107,13 +123,13 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
             HistoryEntry(
               command: 'mise ls --json',
               timestamp: _formatNow(),
-              detail: '用户手动刷新了项目覆盖扫描结果。',
+              detail: tr('Project override scan refreshed manually.'),
               level: HealthLevel.info,
               status: HistoryStatus.success,
               exitCode: 0,
             ),
           );
-      _showFeedback('扫描结果已刷新。');
+      _showFeedback(tr('Scan results refreshed.'));
     } catch (error) {
       _showFeedback(_formatRefreshError(error));
     } finally {
@@ -141,7 +157,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     final normalizedPath = _normalizePath(path);
     final exists = await Directory(normalizedPath).exists();
     if (!exists) {
-      _showFeedback('目录不存在，先确认路径再添加。');
+      _showFeedback(
+        tr('Directory does not exist. Check the path before adding.'),
+      );
       return;
     }
 
@@ -149,7 +167,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         .where((directory) => directory.path == normalizedPath)
         .toList(growable: false);
     if (sameDirectory.isNotEmpty && sameDirectory.first.enabled) {
-      _showFeedback('这个扫描目录已经存在。');
+      _showFeedback(tr('This scan directory already exists.'));
       return;
     }
 
@@ -162,7 +180,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         )
         .toList(growable: false);
     if (coveredByAncestor.isNotEmpty) {
-      _showFeedback('这个目录已经被 ${coveredByAncestor.first.path} 包含，不再重复添加。');
+      _showFeedback(
+        trArgs('This directory is already covered by {path}.', {
+          'path': coveredByAncestor.first.path,
+        }),
+      );
       return;
     }
 
@@ -186,14 +208,19 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     await ref.read(projectsRepositoryProvider).addScanDirectory(normalizedPath);
     await _reloadData();
     if (sameDirectory.isNotEmpty && !sameDirectory.first.enabled) {
-      _showFeedback('已重新启用扫描目录。');
+      _showFeedback(tr('Scan directory re-enabled.'));
       return;
     }
     if (coveredChildren.isNotEmpty) {
-      _showFeedback('已添加扫描目录，并自动去重 ${coveredChildren.length} 个被包含的子目录。');
+      _showFeedback(
+        trArgs(
+          'Scan directory added. {count} nested directories were deduplicated.',
+          {'count': coveredChildren.length},
+        ),
+      );
       return;
     }
-    _showFeedback('已添加扫描目录。');
+    _showFeedback(tr('Scan directory added.'));
   }
 
   Future<bool?> _confirmRiskyScanDirectory(ScanDirectoryRisk risk) {
@@ -202,7 +229,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       builder: (dialogContext) {
         final colors = AppTheme.colorsOf(dialogContext);
         return AlertDialog(
-          title: const Text('确认扫描范围'),
+          title: Text(tr('Confirm scan scope')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +258,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                '这会递归扫描大量目录，可能明显拖慢应用或触发系统权限提示。通常建议选择具体的项目工作区，例如 ~/Projects。',
+                tr(
+                  'This recursively scans a large number of directories and may slow down the app or trigger system permission prompts. Prefer a specific project workspace such as ~/Projects.',
+                ),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
             ],
@@ -239,7 +268,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('重新选择'),
+              child: Text(tr('Choose again')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -247,7 +276,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('仍然添加'),
+              child: Text(tr('Add anyway')),
             ),
           ],
         );
@@ -261,12 +290,14 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       builder: (dialogContext) {
         final colors = AppTheme.colorsOf(dialogContext);
         return AlertDialog(
-          title: const Text('删除扫描目录'),
-          content: Text('不再扫描 ${directory.path}？'),
+          title: Text(tr('Remove scan directory')),
+          content: Text(
+            trArgs('Stop scanning {path}?', {'path': directory.path}),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('取消'),
+              child: Text(tr('Cancel')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -274,7 +305,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('删除'),
+              child: Text(tr('Delete')),
             ),
           ],
         );
@@ -288,7 +319,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         .read(projectsRepositoryProvider)
         .removeScanDirectory(directory.path);
     await _reloadData();
-    _showFeedback('扫描目录已删除。');
+    _showFeedback(tr('Scan directory removed.'));
   }
 
   Future<void> _handleToggleDirectory(
@@ -311,9 +342,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
 
   String _formatRefreshError(Object error) {
     if (isMiseCommandUnavailable(error)) {
-      return '扫描失败：未检测到 mise CLI。';
+      return tr('Scan failed: mise CLI not found.');
     }
-    return '扫描失败，请稍后重试。';
+    return tr('Scan failed. Please try again later.');
   }
 
   void _showFeedback(String message) {
@@ -361,14 +392,17 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final coverageValue = ref.watch(projectCoverageProvider);
 
     return AsyncStateView(
       value: coverageValue,
       builder: (snapshot) {
         return AppPageScaffold(
-          title: '项目覆盖',
-          description: '管理扫描目录，只显示覆盖了全局版本的项目和版本差异。',
+          title: tr('Project overrides'),
+          description: tr(
+            'Manage scan directories. Only projects that override global versions are listed.',
+          ),
           actions: [
             FilledButton.icon(
               onPressed: _handleRefresh,
@@ -379,7 +413,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.refresh_rounded),
-              label: Text(_refreshing ? '扫描中...' : '重新扫描'),
+              label: Text(_refreshing ? tr('Scanning...') : tr('Rescan')),
             ),
           ],
           child: _ProjectCoverageLayout(
@@ -607,10 +641,15 @@ class _ScanDirectoriesHeader extends StatelessWidget {
         final titleBlock = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('扫描范围', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              tr('Scan scope'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
-              '添加工作区目录后，应用会在其中查找 mise 项目和项目级版本覆盖。',
+              tr(
+                'Add a workspace directory and the app will look for mise projects and project-level version overrides inside it.',
+              ),
               style: TextStyle(color: colors.textMuted, height: 1.45),
             ),
           ],
@@ -625,7 +664,7 @@ class _ScanDirectoriesHeader extends StatelessWidget {
             FilledButton.icon(
               onPressed: onAddDirectory,
               icon: const Icon(Icons.create_new_folder_rounded, size: 18),
-              label: const Text('添加目录'),
+              label: Text(tr('Add directory')),
             ),
           ],
         );
@@ -677,7 +716,9 @@ class _DirectoryCountPill extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '$directoryCount 个目录',
+            trArgs('{count, plural, one {# directory} other {# directories}}', {
+              'count': directoryCount,
+            }),
             style: TextStyle(
               color: colors.textMuted,
               fontSize: 12,
@@ -716,14 +757,16 @@ class _ScanDirectoriesEmptyState extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '还没有扫描目录',
+              tr('No scan directories yet'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              '添加一个工作区目录后，就可以开始扫描项目覆盖。',
+              tr(
+                'Add a workspace directory to start scanning for project overrides.',
+              ),
               style: TextStyle(color: colors.textMuted, height: 1.45),
             ),
           ],
@@ -731,7 +774,7 @@ class _ScanDirectoriesEmptyState extends StatelessWidget {
         final button = OutlinedButton.icon(
           onPressed: onAddDirectory,
           icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('添加第一个目录'),
+          label: Text(tr('Add your first directory')),
         );
 
         return Container(
@@ -858,10 +901,17 @@ class _ScanDirectoryCard extends StatelessWidget {
                       : Icons.add_circle_outline_rounded,
                   size: 18,
                 ),
-                label: Text(directory.enabled ? '暂停扫描' : '启用扫描'),
+                label: Text(
+                  directory.enabled
+                      ? tr('Pause scanning')
+                      : tr('Enable scanning'),
+                ),
               ),
               const Spacer(),
-              _DangerIconButton(tooltip: '删除扫描目录', onPressed: onRemove),
+              _DangerIconButton(
+                tooltip: tr('Remove scan directory'),
+                onPressed: onRemove,
+              ),
             ],
           ),
         ],
@@ -946,14 +996,19 @@ class _DirectoryProjectDetails extends StatelessWidget {
         backgroundColor: colors.panelRaised.withValues(alpha: 0.2),
         collapsedBackgroundColor: colors.panelRaised.withValues(alpha: 0.14),
         visualDensity: VisualDensity.compact,
-        title: const Text(
-          '查看项目明细',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          tr('View project details'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           overrideProjectCount > 0
-              ? '$projectCount 个 mise 项目，$overrideProjectCount 个存在覆盖'
-              : '$projectCount 个 mise 项目，暂无版本覆盖',
+              ? trArgs('{projects} mise projects, {overrides} with overrides', {
+                  'projects': projectCount,
+                  'overrides': overrideProjectCount,
+                })
+              : trArgs('{count} mise projects, no version overrides', {
+                  'count': projectCount,
+                }),
           style: TextStyle(
             color: overrideProjectCount > 0 ? colors.warning : colors.textMuted,
             fontSize: 12,
@@ -1025,29 +1080,36 @@ class _DirectoryScanSummary {
     required int overrideProjectCount,
   }) {
     if (!enabled) {
-      return const _DirectoryScanSummary._paused();
+      return _DirectoryScanSummary._paused();
     }
 
     if (projectCount == 0) {
-      return const _DirectoryScanSummary._empty();
+      return _DirectoryScanSummary._empty();
     }
 
     if (overrideProjectCount > 0) {
       return _DirectoryScanSummary._warning(
-        '发现 $projectCount 个 mise 项目，其中 $overrideProjectCount 个存在版本覆盖。',
+        trArgs(
+          'Found {projects} mise projects, {overrides} with version overrides.',
+          {'projects': projectCount, 'overrides': overrideProjectCount},
+        ),
       );
     }
 
-    return _DirectoryScanSummary._healthy('发现 $projectCount 个 mise 项目，暂无版本覆盖。');
+    return _DirectoryScanSummary._healthy(
+      trArgs('Found {count} mise projects, no version overrides.', {
+        'count': projectCount,
+      }),
+    );
   }
 
-  const _DirectoryScanSummary._paused()
-    : message = '已暂停扫描，保留上次扫描结果。',
+  _DirectoryScanSummary._paused()
+    : message = tr('Scanning paused. Last results are preserved.'),
       icon = Icons.pause_circle_outline_rounded,
       level = HealthLevel.info;
 
-  const _DirectoryScanSummary._empty()
-    : message = '未发现 mise 项目。',
+  _DirectoryScanSummary._empty()
+    : message = tr('No mise projects found.'),
       icon = Icons.search_off_rounded,
       level = HealthLevel.info;
 
@@ -1084,7 +1146,7 @@ class _DirectoryStatusLabel extends StatelessWidget {
         ),
         const SizedBox(width: 7),
         Text(
-          enabled ? '扫描中' : '已暂停',
+          enabled ? tr('Scanning') : tr('Paused'),
           style: TextStyle(
             color: color,
             fontSize: 12,
@@ -1132,7 +1194,7 @@ class _ScannedProjectRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
-            tooltip: '复制路径',
+            tooltip: tr('Copy path'),
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: project.path));
               if (!context.mounted) {
@@ -1140,7 +1202,9 @@ class _ScannedProjectRow extends StatelessWidget {
               }
               final messenger = ScaffoldMessenger.of(context);
               messenger.removeCurrentSnackBar();
-              messenger.showSnackBar(const SnackBar(content: Text('项目路径已复制。')));
+              messenger.showSnackBar(
+                SnackBar(content: Text(tr('Project path copied.'))),
+              );
             },
             icon: const Icon(Icons.content_copy_rounded, size: 18),
             visualDensity: VisualDensity.compact,
@@ -1178,10 +1242,15 @@ class _OverridesPanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('覆盖项目', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      tr('Override projects'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                      '只列出项目版本和全局版本不一致的条目。',
+                      tr(
+                        'Only entries whose project version differs from the global version are listed.',
+                      ),
                       style: TextStyle(color: colors.textMuted, height: 1.5),
                     ),
                   ],
@@ -1190,17 +1259,22 @@ class _OverridesPanel extends StatelessWidget {
               const SizedBox(width: 12),
               if (overrideRows.isNotEmpty)
                 StatusBadge(
-                  label: '${overrideRows.length} 项',
+                  label: trArgs(
+                    '{count, plural, one {# item} other {# items}}',
+                    {'count': overrideRows.length},
+                  ),
                   level: HealthLevel.warning,
                 ),
             ],
           ),
           const SizedBox(height: 18),
           if (directories.isEmpty)
-            const _OverridesEmptyState(message: '暂无项目覆盖全局版本')
+            _OverridesEmptyState(
+              message: tr('No project overrides global versions'),
+            )
           else if (overrideRows.isEmpty)
             _OverridesEmptyState(
-              message: projectCount > 0 ? '暂无项目覆盖全局版本' : '暂无项目覆盖全局版本',
+              message: tr('No project overrides global versions'),
             )
           else
             SingleChildScrollView(
@@ -1261,15 +1335,15 @@ class _OverridesTableHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border),
       ),
-      child: const SizedBox(
+      child: SizedBox(
         width: _tableContentWidth,
         child: Row(
           children: [
-            _TableHeaderCell(label: '项目', width: 260),
-            _TableHeaderCell(label: '工具', width: 120),
-            _TableHeaderCell(label: '项目版本', width: 170),
-            _TableHeaderCell(label: '全局版本', width: 170),
-            _TableHeaderCell(label: '扫描目录', width: 260),
+            _TableHeaderCell(label: tr('Projects'), width: 260),
+            _TableHeaderCell(label: tr('Tools'), width: 120),
+            _TableHeaderCell(label: tr('Project version'), width: 170),
+            _TableHeaderCell(label: tr('Global version'), width: 170),
+            _TableHeaderCell(label: tr('Scan directory'), width: 260),
           ],
         ),
       ),
@@ -1482,10 +1556,14 @@ class _AddScanDirectoryDialogState extends State<_AddScanDirectoryDialog> {
       );
     } on PlatformException catch (error) {
       debugPrint('Directory picker channel failed: $error');
-      _showFeedback('目录选择器暂时不可用，请手动输入路径。');
+      _showFeedback(
+        tr('The directory picker is unavailable. Enter a path manually.'),
+      );
     } catch (error) {
       debugPrint('Directory picker failed: $error');
-      _showFeedback('打开目录选择器失败，请手动输入路径。');
+      _showFeedback(
+        tr('Could not open the directory picker. Enter a path manually.'),
+      );
     } finally {
       if (mounted) {
         setState(() => _selecting = false);
@@ -1500,7 +1578,7 @@ class _AddScanDirectoryDialogState extends State<_AddScanDirectoryDialog> {
 
     try {
       return await getDirectoryPath(
-        confirmButtonText: '选择目录',
+        confirmButtonText: tr('Select directory'),
         initialDirectory: initialDirectory,
       );
     } on PlatformException {
@@ -1519,7 +1597,7 @@ class _AddScanDirectoryDialogState extends State<_AddScanDirectoryDialog> {
     final script =
         '''
 set defaultFolder to POSIX file "$sanitizedDirectory"
-set chosenFolder to choose folder with prompt "选择要扫描的目录" default location defaultFolder
+set chosenFolder to choose folder with prompt "${tr('Choose a directory to scan')}" default location defaultFolder
 POSIX path of chosenFolder
 ''';
 
@@ -1536,7 +1614,9 @@ POSIX path of chosenFolder
 
     throw PlatformException(
       code: 'macos-directory-picker-failed',
-      message: stderr.isEmpty ? 'macOS 目录选择器执行失败。' : stderr,
+      message: stderr.isEmpty
+          ? tr('The macOS directory picker failed.')
+          : stderr,
     );
   }
 
@@ -1564,20 +1644,24 @@ POSIX path of chosenFolder
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('添加扫描目录'),
+      title: Text(tr('Add scan directory')),
       content: SizedBox(
         width: 520,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('输入要扫描的目录路径。应用会在目录内递归查找 `mise.toml` 和常见版本文件。'),
+            Text(
+              tr(
+                'Enter the directory path to scan. The app recursively looks for `mise.toml` and common version files.',
+              ),
+            ),
             const SizedBox(height: 14),
             TextField(
               controller: _controller,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: '目录路径',
+              decoration: InputDecoration(
+                labelText: tr('Directory path'),
                 hintText: '/Users/you/Projects',
               ),
             ),
@@ -1593,7 +1677,11 @@ POSIX path of chosenFolder
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.folder_open_rounded),
-                  label: Text(_selecting ? '打开中...' : '浏览本地目录'),
+                  label: Text(
+                    _selecting
+                        ? tr('Opening...')
+                        : tr('Browse local directories'),
+                  ),
                 ),
               ],
             ),
@@ -1603,11 +1691,11 @@ POSIX path of chosenFolder
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(tr('Cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
-          child: const Text('添加'),
+          child: Text(tr('Add')),
         ),
       ],
     );

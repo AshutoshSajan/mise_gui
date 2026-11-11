@@ -40,7 +40,7 @@ void main() {
     );
     expect(
       workspace.sections
-          .firstWhere((section) => section.title == '运行时设置')
+          .firstWhere((section) => section.title == 'Runtime settings')
           .items
           .first
           .value,

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
+
 const String _shellEnvironmentStartMarker =
     '__MISE_GUI_SHELL_ENVIRONMENT_START__';
 const String _shellEnvironmentEndMarker = '__MISE_GUI_SHELL_ENVIRONMENT_END__';
@@ -206,11 +208,13 @@ MiseFailureDiagnosis? diagnoseMiseCommandFailure({
 
   if (combined.contains('make: command not found')) {
     return MiseFailureDiagnosis(
-      summary: '缺少 make，当前机器还不具备源码编译依赖。',
-      detail:
-          '$command 执行失败。错误输出显示系统找不到 `make`，这类像 Redis 一样需要本地编译的工具通常还依赖 Xcode Command Line Tools。'
-          ' 先执行 `xcode-select --install`，再用 `make --version` 和 `clang --version` 确认命令可用，然后重试。'
-          ' 已保留实际 CLI 和原始错误输出。',
+      summary: tr(
+        'make is missing, so this machine cannot build from source yet.',
+      ),
+      detail: trArgs(
+        '`{command}` failed. The error output shows that `make` is unavailable; tools that compile locally, such as Redis, usually also need Xcode Command Line Tools. Run `xcode-select --install` first, then confirm `make --version` and `clang --version` work before retrying. The actual CLI command and raw error output were kept.',
+        {'command': command},
+      ),
     );
   }
 
@@ -219,11 +223,13 @@ MiseFailureDiagnosis? diagnoseMiseCommandFailure({
       combined.contains('gcc: command not found') ||
       combined.contains('no acceptable c compiler found')) {
     return MiseFailureDiagnosis(
-      summary: '缺少 C 编译工具链，当前机器无法完成源码构建。',
-      detail:
-          '$command 执行失败。错误输出显示系统缺少可用的 C 编译器。'
-          ' 在 macOS 上先安装 Xcode Command Line Tools：`xcode-select --install`，然后确认 `clang --version`、`make --version` 可运行后再重试。'
-          ' 已保留实际 CLI 和原始错误输出。',
+      summary: tr(
+        'The C build toolchain is missing, so this machine cannot build from source.',
+      ),
+      detail: trArgs(
+        '`{command}` failed. The error output shows that no usable C compiler is available. On macOS, install Xcode Command Line Tools first with `xcode-select --install`, then confirm `clang --version` and `make --version` work before retrying. The actual CLI command and raw error output were kept.',
+        {'command': command},
+      ),
     );
   }
 
@@ -317,9 +323,11 @@ class LocalMiseProcessService implements MiseProcessService {
 
     final localAppData = Platform.environment['LOCALAPPDATA'];
     if (localAppData == null || localAppData.isEmpty) {
-      return const WindowsShimPathStatus(
+      return WindowsShimPathStatus(
         source: WindowsShimPathSource.missing,
-        detail: '当前还没法确认 Windows 终端是否已经接入 mise。可以先查看修复命令，按提示补齐后再重开终端。',
+        detail: tr(
+          'Could not confirm whether the Windows terminal is connected to mise yet. Review the fix command, follow it, and reopen the terminal.',
+        ),
       );
     }
 
@@ -341,9 +349,9 @@ class LocalMiseProcessService implements MiseProcessService {
     return WindowsShimPathStatus(
       source: WindowsShimPathSource.missing,
       shimPath: shimPath,
-      detail:
-          '检测到 Windows 终端还没有接入 mise shims。应用已经识别到该工具由 mise 管理，但新的 cmd / PowerShell 会话里还不能直接调用。'
-          ' 执行下面的命令后，重新打开终端即可生效。',
+      detail: tr(
+        'The Windows terminal is not connected to mise shims yet. The app detected that this tool is managed by mise, but new cmd / PowerShell sessions cannot call it directly. Run the command below, then reopen the terminal to apply it.',
+      ),
       commandPreview: _windowsShimPathFixCommand(shimPath),
     );
   }
@@ -596,25 +604,31 @@ class LocalMiseProcessService implements MiseProcessService {
       );
 
       if (result.exitCode != 0) {
-        return const ShellEnvironmentLoadResult(
+        return ShellEnvironmentLoadResult(
           source: ShellEnvironmentSource.desktopFallback,
-          detail: '登录 shell 返回了非零退出码，已回退到桌面进程环境。',
+          detail: tr(
+            'The login shell returned a non-zero exit code; fell back to the desktop process environment.',
+          ),
         );
       }
 
       final rawOutput = (result.stdout ?? '').toString();
       if (rawOutput.isEmpty) {
-        return const ShellEnvironmentLoadResult(
+        return ShellEnvironmentLoadResult(
           source: ShellEnvironmentSource.desktopFallback,
-          detail: '登录 shell 没有返回可解析的环境变量，已回退到桌面进程环境。',
+          detail: tr(
+            'The login shell returned no parseable environment variables; fell back to the desktop process environment.',
+          ),
         );
       }
 
       final environment = parseShellEnvironmentOutput(rawOutput);
       if (environment.isEmpty) {
-        return const ShellEnvironmentLoadResult(
+        return ShellEnvironmentLoadResult(
           source: ShellEnvironmentSource.desktopFallback,
-          detail: '未能可靠解析 shell 输出，已回退到桌面进程环境。',
+          detail: tr(
+            'Could not reliably parse the shell output; fell back to the desktop process environment.',
+          ),
         );
       }
 
@@ -623,9 +637,11 @@ class LocalMiseProcessService implements MiseProcessService {
         environment: environment,
       );
     } catch (_) {
-      return const ShellEnvironmentLoadResult(
+      return ShellEnvironmentLoadResult(
         source: ShellEnvironmentSource.desktopFallback,
-        detail: '读取登录 shell 环境时发生异常，已回退到桌面进程环境。',
+        detail: tr(
+          'An error occurred while reading the login shell environment; fell back to the desktop process environment.',
+        ),
       );
     }
   }
@@ -689,8 +705,10 @@ if ($entries -notcontains $shimDir) {
   )
 }
 mise reshim
-Write-Host '已写入用户 PATH，请关闭并重新打开 cmd / PowerShell 后再执行工具命令。'
-''';
+'''
+        "Write-Host '"
+        "${tr('Wrote to the user PATH. Close and reopen cmd / PowerShell before running tool commands again.')}"
+        "'\n";
   }
 }
 

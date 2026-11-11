@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/shared/ui/app_panel.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 
@@ -25,12 +26,14 @@ class AsyncStateView<T> extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '还没有检测到 mise',
+                          tr('mise was not detected'),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          '当前页面需要可用的 mise CLI 才能继续读取环境信息。先完成安装，再回到应用里刷新即可。',
+                        Text(
+                          tr(
+                            'This page needs a working mise CLI to read environment information. Install it, then return and refresh.',
+                          ),
                         ),
                         const SizedBox(height: 16),
                         SelectableText(
@@ -39,7 +42,9 @@ class AsyncStateView<T> extends StatelessWidget {
                         ),
                       ],
                     )
-                  : Text('页面加载失败: $error'),
+                  : Text(
+                      trArgs('Failed to load page: {error}', {'error': error.toString()}),
+                    ),
             ),
           ),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/shared/ui/history_entry_dialog.dart';
 
@@ -59,12 +60,12 @@ class _RecentHistoryDialogState extends ConsumerState<RecentHistoryDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '最近操作',
+                        tr('Recent operations'),
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '查看最近通过界面执行过的命令，以及对应的输出结果。',
+                        tr('Review commands run from the app and their output.'),
                         style: TextStyle(color: colors.textMuted, height: 1.5),
                       ),
                     ],
@@ -94,7 +95,7 @@ class _RecentHistoryDialogState extends ConsumerState<RecentHistoryDialog> {
                   if (snapshot.hasError) {
                     return Center(
                       child: Text(
-                        '读取最近操作失败，请稍后重试。',
+                        tr('Failed to load recent operations. Please try again later.'),
                         style: TextStyle(color: colors.textMuted),
                       ),
                     );
@@ -104,7 +105,7 @@ class _RecentHistoryDialogState extends ConsumerState<RecentHistoryDialog> {
                   if (entries.isEmpty) {
                     return Center(
                       child: Text(
-                        '当前还没有最近操作记录。',
+                        tr('No recent operations yet.'),
                         style: TextStyle(color: colors.textMuted),
                       ),
                     );
@@ -230,7 +231,7 @@ class _HistoryStatusMeta extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          entry.status.label,
+          tr(entry.status.label),
           style: TextStyle(
             color: entry.isFailure ? statusColor : colors.textMuted,
             fontSize: 12,

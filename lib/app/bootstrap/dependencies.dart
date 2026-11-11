@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/repositories/config_repository.dart';
 import 'package:mise_gui/repositories/dashboard_repository.dart';
@@ -51,6 +52,14 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
     AppThemePreference.dark => ThemeMode.dark,
   };
 });
+
+final appLanguageProvider = StateProvider<AppLanguage>(
+  (ref) => AppLanguage.english,
+);
+
+final appLocaleProvider = Provider<Locale>(
+  (ref) => resolveAppLocale(ref.watch(appLanguageProvider)),
+);
 
 final appReleaseServiceProvider = Provider<AppReleaseService>(
   (ref) => const PackageInfoAppReleaseService(),

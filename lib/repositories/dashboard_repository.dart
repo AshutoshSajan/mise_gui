@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/repositories/projects_repository.dart';
 import 'package:mise_gui/services/history_service.dart';
@@ -48,37 +49,50 @@ class DashboardRepository {
     );
 
     return DashboardSnapshot(
-      title: '环境总览',
+      title: 'Environment overview',
       subtitle: '',
       metrics: [
         SummaryMetric(
-          label: '当前系统',
+          label: 'Current system',
           value: operatingSystemInfo.label,
           caption: operatingSystemInfo.caption,
           level: HealthLevel.info,
         ),
         SummaryMetric(
-          label: '已装工具',
-          value: '${toolSummary.installedToolCount} 个',
-          caption: '当前已纳入 mise 管理的本地工具。',
+          label: 'Installed tools',
+          value: trArgs('{count, plural, one {# tool} other {# tools}}', {
+            'count': toolSummary.installedToolCount,
+          }),
+          caption: tr('Local tools currently managed by mise.'),
           level: toolSummary.installedToolCount > 0
               ? HealthLevel.healthy
               : HealthLevel.info,
         ),
         SummaryMetric(
-          label: '项目覆盖',
+          label: 'Project overrides',
           value: projects.isEmpty
-              ? '未配置'
+              ? tr('Not configured')
               : overrideCount > 0
-              ? '$overrideProjectCount 个项目'
-              : '无覆盖',
+              ? trArgs('{count, plural, one {# project} other {# projects}}', {'count': overrideProjectCount})
+              : tr('No overrides'),
           caption: projects.isEmpty
-              ? '还没有配置要扫描的项目目录。'
+              ? tr('No project directories configured for scanning yet.')
               : overrideCount > 0
-              ? '已扫描 ${projects.length} 个项目，发现 $overrideCount 处覆盖，分布在 $overrideProjectCount 个项目里。'
+              ? trArgs(
+                  'Scanned {projects} projects and found {overrides} overrides across {overrideProjects} projects.',
+                  {
+                    'projects': projects.length,
+                    'overrides': overrideCount,
+                    'overrideProjects': overrideProjectCount,
+                  },
+                )
               : declaredToolCount > 0
-              ? '已扫描 ${projects.length} 个项目，没有发现覆盖全局版本的项目。'
-              : '已扫描 ${projects.length} 个项目，暂未检测到项目级版本声明。',
+              ? trArgs('Scanned {count} projects; no global version overrides were found.', {
+                  'count': projects.length,
+                })
+              : trArgs('Scanned {count} projects; no project-level version declarations were found.', {
+                  'count': projects.length,
+                }),
           level: overrideCount > 0
               ? HealthLevel.warning
               : projects.isEmpty
@@ -86,7 +100,7 @@ class DashboardRepository {
               : HealthLevel.healthy,
         ),
         SummaryMetric(
-          label: 'Mise 版本',
+          label: 'Mise version',
           value: miseVersionInfo.version,
           caption: miseVersionInfo.detail,
           level: miseVersionInfo.level,
@@ -171,7 +185,7 @@ class DashboardRepository {
       Abi.macosX64 || Abi.linuxX64 || Abi.windowsX64 => 'x64',
       _ => Abi.current().toString().split('.').last,
     };
-    return '$arch 架构';
+    return '$arch arch';
   }
 
   Future<_OperatingSystemInfo> _loadOperatingSystemInfo() async {
@@ -256,12 +270,12 @@ class DashboardRepository {
 
     final memoryInfo = details[1];
     if (memoryInfo != null && memoryInfo.isNotEmpty) {
-      captionParts.add('内存 $memoryInfo');
+      captionParts.add('Memory $memoryInfo');
     }
 
     final diskInfo = details[2];
     if (diskInfo != null && diskInfo.isNotEmpty) {
-      captionParts.add('磁盘 $diskInfo');
+      captionParts.add('Disk $diskInfo');
     }
   }
 
@@ -370,8 +384,10 @@ class DashboardRepository {
         if (diskInfo == null || diskInfo.totalBytes <= 0) {
           return null;
         }
-        return '${formatByteCount(diskInfo.availableBytes)} 可用 / '
-            '${formatByteCount(diskInfo.totalBytes)} 总计';
+        return trArgs('{available} free / {total} total', {
+          'available': formatByteCount(diskInfo.availableBytes),
+          'total': formatByteCount(diskInfo.totalBytes),
+        });
       }
 
       if (Platform.isWindows) {
@@ -395,8 +411,10 @@ if ($null -ne $disk) {
         if (freeBytes == null || totalBytes == null || totalBytes <= 0) {
           return null;
         }
-        return '${formatByteCount(freeBytes)} 可用 / '
-            '${formatByteCount(totalBytes)} 总计';
+        return trArgs('{available} free / {total} total', {
+          'available': formatByteCount(freeBytes),
+          'total': formatByteCount(totalBytes),
+        });
       }
     } catch (_) {
       return null;
@@ -441,21 +459,21 @@ if ($null -ne $disk) {
       final detail = firstLine.replaceFirst(version, '').trim();
 
       return _MiseVersionInfo(
-        version: version.isEmpty ? '未知' : version,
-        detail: detail.isEmpty ? 'mise CLI 已可用。' : detail,
+        version: version.isEmpty ? tr('Unknown') : version,
+        detail: detail.isEmpty ? tr('mise CLI is available.') : detail,
         level: HealthLevel.info,
       );
     } catch (error) {
       if (isMiseCommandUnavailable(error)) {
-        return const _MiseVersionInfo(
-          version: '未检测到',
-          detail: '当前设备还没有可执行的 mise CLI。',
+        return _MiseVersionInfo(
+          version: tr('Not detected'),
+          detail: tr('No executable mise CLI is available on this device yet.'),
           level: HealthLevel.critical,
         );
       }
       return _MiseVersionInfo(
-        version: '读取失败',
-        detail: '无法读取 mise 版本: $error',
+        version: tr('Failed to load'),
+        detail: trArgs('Could not read the mise version: {error}', {'error': error}),
         level: HealthLevel.warning,
       );
     }

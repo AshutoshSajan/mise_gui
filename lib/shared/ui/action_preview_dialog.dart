@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 class ActionPreviewDialogData {
@@ -84,7 +85,7 @@ class _ActionPreviewDialog extends StatelessWidget {
             final commandPanel = SizedBox(
               height: 210,
               child: _CodeCard(
-                title: '实际命令',
+                title: 'Actual command',
                 content: data.command,
                 trailing: TextButton.icon(
                   onPressed: () async {
@@ -93,11 +94,11 @@ class _ActionPreviewDialog extends StatelessWidget {
                       return;
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('已复制实际 CLI 命令。')),
+                      SnackBar(content: Text(tr('Actual CLI command copied.'))),
                     );
                   },
                   icon: const Icon(Icons.content_copy_rounded, size: 16),
-                  label: const Text('复制命令'),
+                  label: Text(tr('Copy command')),
                 ),
               ),
             );
@@ -147,7 +148,7 @@ class _ActionPreviewDialog extends StatelessWidget {
                                 data.diffPreview!.trim().isNotEmpty) ...[
                               Expanded(
                                 child: _CodeCard(
-                                  title: '差异预览',
+                                  title: 'Diff preview',
                                   content: data.diffPreview!,
                                 ),
                               ),
@@ -169,7 +170,7 @@ class _ActionPreviewDialog extends StatelessWidget {
                                     const SizedBox(height: 16),
                                     Expanded(
                                       child: _CodeCard(
-                                        title: '差异预览',
+                                        title: 'Diff preview',
                                         content: data.diffPreview!,
                                       ),
                                     ),
@@ -189,7 +190,7 @@ class _ActionPreviewDialog extends StatelessWidget {
                     children: [
                       OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('取消'),
+                        child: Text(tr('Cancel')),
                       ),
                       const SizedBox(width: 12),
                       FilledButton.icon(
@@ -224,7 +225,7 @@ class _MetaPanel extends StatelessWidget {
         children: [
           if (data.affectedFiles.isNotEmpty)
             _InfoBlock(
-              title: '影响文件',
+              title: 'Affected files',
               children: [
                 for (final file in data.affectedFiles)
                   _MetaLine(text: file, color: colors.textPrimary, mono: true),
@@ -233,7 +234,7 @@ class _MetaPanel extends StatelessWidget {
           if (data.impactScope.isNotEmpty) ...[
             if (data.affectedFiles.isNotEmpty) const SizedBox(height: 14),
             _InfoBlock(
-              title: '影响范围',
+              title: 'Impact',
               children: [
                 for (final item in data.impactScope)
                   _MetaLine(text: item, color: colors.textPrimary),
@@ -244,7 +245,7 @@ class _MetaPanel extends StatelessWidget {
             if (data.affectedFiles.isNotEmpty || data.impactScope.isNotEmpty)
               const SizedBox(height: 14),
             _InfoBlock(
-              title: '风险提示',
+              title: 'Risks',
               children: [
                 for (final item in data.riskNotes)
                   _MetaLine(text: item, color: colors.warning),
@@ -318,7 +319,7 @@ class _CommandOnlyPreviewDialog extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             _CodeCard(
-              title: '实际命令',
+              title: 'Actual command',
               content: data.command,
               expandContent: false,
               trailing: TextButton.icon(
@@ -328,15 +329,17 @@ class _CommandOnlyPreviewDialog extends StatelessWidget {
                     return;
                   }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已复制实际 CLI 命令。')),
+                    SnackBar(content: Text(tr('Actual CLI command copied.'))),
                   );
                 },
                 icon: const Icon(Icons.content_copy_rounded, size: 16),
-                label: const Text('复制命令'),
+                label: Text(tr('Copy command')),
               ),
             ),
             const SizedBox(height: 14),
-            const _CommandPreviewHint(text: '这里只用于查看和复制，关闭窗口不会执行命令。'),
+            const _CommandPreviewHint(
+              text: 'This is read-only. Closing the dialog will not run the command.',
+            ),
           ],
         ),
       ),
@@ -364,7 +367,7 @@ class _CommandPreviewHint extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            text,
+            tr(text),
             style: TextStyle(
               color: colors.textMuted.withValues(alpha: 0.9),
               fontSize: 12,
@@ -399,7 +402,7 @@ class _InfoBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            tr(title),
             style: const TextStyle(
               fontFamily: 'FiraCode',
               fontSize: 16,
@@ -481,7 +484,7 @@ class _CodeCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
+                  tr(title),
                   style: const TextStyle(
                     fontFamily: 'FiraCode',
                     fontSize: 17,

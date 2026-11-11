@@ -8,6 +8,7 @@ import 'package:mise_gui/app/router/app_destination.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/dashboard/application/dashboard_provider.dart';
 import 'package:mise_gui/features/tools/presentation/tools_page.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/app_release_service.dart';
 import 'package:mise_gui/services/app_update_service.dart';
@@ -35,7 +36,8 @@ class _MissingMiseProcessService implements MiseProcessService {
   Future<ShellEnvironmentLoadResult> inspectShellEnvironment() async {
     return const ShellEnvironmentLoadResult(
       source: ShellEnvironmentSource.desktopFallback,
-      detail: '未能可靠读取登录 shell 环境，已回退到桌面进程环境。',
+      detail:
+          'Could not reliably read the login shell environment; fell back to the desktop process environment.',
     );
   }
 
@@ -88,7 +90,7 @@ class _HasUpdateAppUpdateService implements AppUpdateService {
       currentVersion: '1.0.0',
       latestVersion: '1.0.1',
       tagName: 'v1.0.1',
-      releaseNotes: '修复若干启动和安装问题',
+      releaseNotes: 'Fixes several startup and install issues.',
       releaseUrl: 'https://github.com/likaia/mise_gui/releases/tag/v1.0.1',
     );
   }
@@ -119,8 +121,9 @@ class _RemoteNoticeRetryMiseCliService extends MockMiseCliService {
         remoteVersions: const [],
         notices: const [
           InlineNotice(
-            title: 'Node.js 远端目录暂时不可用',
-            message: '直接远端列表暂时不可用，已改用 mise outdated 兜底当前版本线的最新稳定版。',
+            title: 'Node.js remote directory temporarily unavailable',
+            message:
+                'The direct remote list is unavailable, so mise outdated is used to find the latest stable version on the current line.',
             level: HealthLevel.warning,
             commandPreview: 'mise ls-remote --json node',
           ),
@@ -133,30 +136,30 @@ class _RemoteNoticeRetryMiseCliService extends MockMiseCliService {
 }
 
 const _dashboardSnapshot = DashboardSnapshot(
-  title: '环境总览',
+  title: 'Environment overview',
   subtitle: '',
   metrics: [
     SummaryMetric(
-      label: '当前系统',
+      label: 'Current system',
       value: 'macOS 26.4.1',
       caption:
-          'Build 25E253\narm64 架构\nApple M5 Pro\n内存 48 GB\n磁盘 557 GB 可用 / 926 GB 总计',
+          'Build 25E253\narm64 arch\nApple M5 Pro\nMemory 48 GB\nDisk 557 GB available / 926 GB total',
       level: HealthLevel.info,
     ),
     SummaryMetric(
-      label: '已装工具',
-      value: '5 个',
-      caption: '当前已纳入 mise 管理的本地工具。',
+      label: 'Installed tools',
+      value: '5',
+      caption: 'Local tools currently managed by mise.',
       level: HealthLevel.healthy,
     ),
     SummaryMetric(
-      label: '项目覆盖',
-      value: '1 个项目',
-      caption: '已扫描 1 个项目，发现 1 处覆盖。',
+      label: 'Project overrides',
+      value: '1 project',
+      caption: 'Scanned 1 project and found 1 override.',
       level: HealthLevel.warning,
     ),
     SummaryMetric(
-      label: 'Mise 版本',
+      label: 'Mise version',
       value: '2026.1.0',
       caption: 'mise is available',
       level: HealthLevel.healthy,
@@ -173,6 +176,8 @@ const _dashboardSnapshot = DashboardSnapshot(
 );
 
 void main() {
+  tearDown(() => AppLocalizations.sync(const Locale('en')));
+
   Future<void> pumpMiseGuiApp(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1600, 1200);
     tester.view.devicePixelRatio = 1;
@@ -206,9 +211,31 @@ void main() {
   testWidgets('loads dashboard shell', (WidgetTester tester) async {
     await pumpMiseGuiApp(tester);
 
-    expect(find.text('总览'), findsWidgets);
-    expect(find.text('工具'), findsWidgets);
-    expect(find.text('项目'), findsWidgets);
+    expect(find.text('Overview'), findsWidgets);
+    expect(find.text('Tools'), findsWidgets);
+    expect(find.text('Projects'), findsWidgets);
+  });
+
+  testWidgets('language switch rebuilds page content and toolbar', (
+    WidgetTester tester,
+  ) async {
+    await pumpMiseGuiApp(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MiseGuiApp)),
+    );
+
+    container.read(appLanguageProvider.notifier).state = AppLanguage.chinese;
+    await tester.pumpAndSettle();
+
+    expect(find.text('环境总览'), findsWidgets);
+    expect(find.text('系统'), findsOneWidget);
+    expect(find.text('System'), findsNothing);
+
+    container.read(appLanguageProvider.notifier).state = AppLanguage.english;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Environment overview'), findsWidgets);
+    expect(find.text('System'), findsOneWidget);
   });
 
   testWidgets('dashboard system metric groups device details', (
@@ -219,14 +246,14 @@ void main() {
     expect(find.text('macOS 26.4.1'), findsOneWidget);
     expect(find.text('Build'), findsOneWidget);
     expect(find.text('25E253'), findsOneWidget);
-    expect(find.text('架构'), findsOneWidget);
+    expect(find.text('Architecture'), findsOneWidget);
     expect(find.text('arm64'), findsOneWidget);
-    expect(find.text('处理器'), findsOneWidget);
+    expect(find.text('Processor'), findsOneWidget);
     expect(find.text('Apple M5 Pro'), findsOneWidget);
-    expect(find.text('内存'), findsOneWidget);
+    expect(find.text('Memory'), findsOneWidget);
     expect(find.text('48 GB'), findsOneWidget);
-    expect(find.text('磁盘'), findsOneWidget);
-    expect(find.text('557 GB 可用 / 926 GB 总计'), findsOneWidget);
+    expect(find.text('Disk'), findsOneWidget);
+    expect(find.text('557 GB available / 926 GB total'), findsOneWidget);
   });
 
   testWidgets('dashboard installed tools metric opens tools tab', (
@@ -292,20 +319,20 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
 
-    expect(find.text('Node.js 详情读取失败'), findsOneWidget);
-    expect(find.text('重试'), findsOneWidget);
-    expect(find.text('最新: 读取失败'), findsOneWidget);
+    expect(find.text('Could not load details for Node.js'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Latest: Load failed'), findsOneWidget);
 
-    await tester.tap(find.text('重试'));
+    await tester.tap(find.text('Retry'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
     await tester.pumpAndSettle();
 
     expect(miseCliService.hydrateAttempts, 2);
-    expect(find.text('Node.js 详情读取失败'), findsNothing);
+    expect(find.text('Could not load details for Node.js'), findsNothing);
     expect(find.text('18.20.4'), findsOneWidget);
-    expect(find.byTooltip('查看命令'), findsNothing);
-    expect(find.text('查看命令'), findsNothing);
+    expect(find.byTooltip('View command'), findsNothing);
+    expect(find.text('View command'), findsNothing);
   });
 
   testWidgets('tools remote notice can retry detail refresh', (
@@ -335,17 +362,23 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
 
-    expect(find.text('Node.js 远端目录暂时不可用'), findsOneWidget);
-    expect(find.text('重试'), findsOneWidget);
-    expect(find.text('查看命令'), findsNothing);
+    expect(
+      find.text('Node.js remote directory temporarily unavailable'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('View command'), findsNothing);
 
-    await tester.tap(find.text('重试'));
+    await tester.tap(find.text('Retry'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 220));
     await tester.pumpAndSettle();
 
     expect(miseCliService.hydrateAttempts, 2);
-    expect(find.text('Node.js 远端目录暂时不可用'), findsNothing);
+    expect(
+      find.text('Node.js remote directory temporarily unavailable'),
+      findsNothing,
+    );
   });
 
   testWidgets('shows install guidance when mise is unavailable', (
@@ -379,7 +412,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('这台电脑还没有安装 mise'), findsOneWidget);
+    expect(find.text('mise is not installed on this computer'), findsOneWidget);
     expect(find.text(recommendedMiseInstallCommand()), findsOneWidget);
   });
 
@@ -414,8 +447,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('这台电脑还没有安装 mise'), findsOneWidget);
-    expect(find.text('安装完成后你会立刻看到'), findsNothing);
+    expect(find.text('mise is not installed on this computer'), findsOneWidget);
+    expect(find.text('Available as soon as mise is installed'), findsNothing);
   });
 
   testWidgets('shows update dialog when a newer release is available', (
@@ -446,8 +479,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('发现新版本'), findsOneWidget);
+    expect(find.text('Update available'), findsOneWidget);
     expect(find.text('1.0.1'), findsWidgets);
-    expect(find.text('修复若干启动和安装问题'), findsOneWidget);
+    expect(
+      find.text('Fixes several startup and install issues.'),
+      findsOneWidget,
+    );
   });
 }

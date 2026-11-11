@@ -205,17 +205,21 @@ void main() {
         processService: _FakeProcessService(
           ShellEnvironmentLoadResult(
             source: ShellEnvironmentSource.desktopFallback,
-            detail: '未能可靠读取登录 shell 环境，已回退到桌面进程环境。',
+            detail:
+                'Could not reliably read the login shell environment; fell back to the desktop process environment.',
           ),
         ),
       );
 
       final signals = await service.fetchEnvironmentSignals();
 
-      expect(signals.first.title, 'Shell 环境');
-      expect(signals.first.value, '已回退');
+      expect(signals.first.title, 'Shell environment');
+      expect(signals.first.value, 'Fallback');
       expect(signals.first.level, HealthLevel.info);
-      expect(signals.first.detail, contains('已回退到桌面进程环境'));
+      expect(
+        signals.first.detail,
+        contains('fell back to the desktop process environment'),
+      );
     },
   );
 
@@ -232,14 +236,14 @@ void main() {
       const tool = ToolRecord(
         id: 'java',
         name: 'Java',
-        category: 'Java 版本管理',
+        category: 'Java version management',
         description: 'Java toolchain',
         activeVersion: 'temurin-21.0.10+7.0.LTS',
         requestedVersion: 'java@21',
-        source: '全局',
+        source: 'Global',
         strategy: 'global',
-        latestStableVersion: '待同步',
-        latestPreviewVersion: '待同步',
+        latestStableVersion: 'Pending sync',
+        latestPreviewVersion: 'Pending sync',
         installedVersions: [],
         remoteVersions: [],
         projectImpacts: [],
@@ -276,7 +280,7 @@ void main() {
           windowsShimPathStatus: WindowsShimPathStatus(
             source: WindowsShimPathSource.missing,
             shimPath: r'C:\Users\demo\AppData\Local\mise\shims',
-            detail: '当前系统 PATH 里还没有 mise shims 目录。',
+            detail: 'The mise shims directory is not in the system PATH yet.',
             commandPreview:
                 r'$shimDir = "C:\Users\demo\AppData\Local\mise\shims"',
           ),
@@ -286,14 +290,14 @@ void main() {
       const tool = ToolRecord(
         id: 'go',
         name: 'Go',
-        category: 'Go 版本管理',
+        category: 'Go version management',
         description: 'Go toolchain',
         activeVersion: '1.26.3',
         requestedVersion: '1.26',
-        source: '全局',
+        source: 'Global',
         strategy: 'global',
-        latestStableVersion: '待同步',
-        latestPreviewVersion: '待同步',
+        latestStableVersion: 'Pending sync',
+        latestPreviewVersion: 'Pending sync',
         installedVersions: [],
         remoteVersions: [],
         projectImpacts: [],
@@ -307,7 +311,9 @@ void main() {
 
       expect(
         hydrated.notices.any(
-          (notice) => notice.title.contains('Windows 终端尚未接入 mise shims'),
+          (notice) => notice.title.contains(
+            'Windows terminal is not using mise shims yet',
+          ),
         ),
         isTrue,
       );

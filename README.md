@@ -2,9 +2,8 @@
   <img src="docs/brand-mark.png" alt="Mise GUI Logo" width="120" height="120">
 </p>
 
-
 <p align="center">
-  简体中文 · <a href="README.en.md">English</a>
+  <a href="README.zh.md">简体中文</a> · English
 </p>
 
 <p align="center">
@@ -16,49 +15,47 @@
 
 # Mise GUI
 
-一个面向开发者的 mise 可视化管理软件，通过图形化界面快速管理本地工具链版本以及项目内所依赖工具版本。
+A visual mise management app for developers, designed to quickly manage local toolchain versions and project-level tool dependencies through a graphical interface.
 
 ![demo-img-1.png](docs/1.png)
 
-## 项目简介
+## Overview
 
-Mise GUI 是一个基于 Flutter 的跨平台桌面应用，为 [mise](https://mise.jdx.dev/) 提供更直观的本地环境管理体验。它会读取真实的 mise CLI 状态，把系统信息、已安装工具、项目级版本覆盖、全局配置和最近操作集中到一起进行快速便捷的管理。
+Mise GUI is a cross-platform Flutter desktop app that provides a more intuitive local environment management experience for [mise](https://mise.jdx.dev/). It reads real mise CLI state and brings system information, installed tools, project-level overrides, global configuration, and recent operations together for fast, convenient management.
 
-本项目适合经常在多语言、多项目之间切换的开发者：你不需要反复执行 `mise current`、`mise ls`、`mise outdated` 或打开多个 `mise.toml` 文件，就能快速判断当前有哪些项目覆盖了全局版本。
+The interface ships in English by default and includes a built-in Simplified Chinese switch.
 
+This project is built for developers who frequently switch between multiple languages and projects. Instead of repeatedly running `mise current`, `mise ls`, `mise outdated`, or opening multiple `mise.toml` files, you can quickly see which projects currently override global versions.
 
+## Screenshots
 
-## 界面预览
+### Tool Versions
 
-
-
-### 工具版本
-
-按工具查看当前版本和最新版本，进入详情后可以加载远端版本、切换版本、升级或卸载。
+View current and latest versions by tool. Open details to load remote versions, switch versions, upgrade, or uninstall.
 
 ![demo-img-2.png](docs/2.png)
 
-### 安装新工具
+### Install a New Tool
 
-安装流程会先读取远端可选版本，确认后进入命令预览，不会直接执行不可见操作。
+The install flow loads remote candidate versions first, then moves into command preview before execution, so operations are never run invisibly.
 
 ![demo-img-3.png](docs/3.png)
 
-### 项目覆盖
+### Project Coverage
 
-你可以添加多个扫描目录，应用会递归检查项目配置，并把覆盖全局默认版本的项目单独展示出来。
+Add multiple scan directories. The app recursively checks project configuration and highlights projects that override global defaults.
 
 ![demo-img-4.png](docs/4.png)
 
-### 配置管理
+### Configuration Management
 
-配置页把全局配置和项目配置放在同一个上下文里，编辑 TOML 前后可以查看差异，减少误改风险。
+The configuration page keeps global and project configuration in the same context. TOML edits can be reviewed with a diff preview before saving, reducing the risk of accidental changes.
 
 ![demo-img-5.png](docs/5.png)
 
-## 开始使用
+## Getting Started
 
-前往[releases](https://github.com/likaia/mise_gui/releases)页下载符合你操作系统的最新版本，软件成功安装后，如果当前机器没有安装 mise，应用会进入引导页并给出推荐安装命令：
+Go to the [releases](https://github.com/likaia/mise_gui/releases) page and download the latest version for your operating system. After installation, if mise is not installed on the current machine, the app will enter the onboarding screen and show the recommended install command:
 
 ```bash
 # macOS
@@ -71,9 +68,7 @@ winget install jdx.mise
 curl https://mise.run | sh
 ```
 
-
-
-## 本地开发
+## Local Development
 
 ```bash
 git clone https://github.com/likaia/mise_gui.git
@@ -83,34 +78,31 @@ flutter pub get
 flutter run -d macos
 ```
 
-其他桌面平台可以替换运行目标：
+Use the matching desktop target on other platforms:
 
 ```bash
 flutter run -d linux
 flutter run -d windows
 ```
 
-
-
-## 项目结构
+## Project Structure
 
 ```text
 lib/
-  app/                  # 应用启动、路由、主题和外壳
+  app/                  # App bootstrap, routing, theme, and shell
   features/
-    dashboard/          # 环境总览
-    tools/              # 工具版本、安装、升级、卸载
-    projects/           # 扫描目录和项目覆盖
-    config/             # 全局与项目配置管理
-  repositories/         # 页面数据聚合
-  services/             # mise CLI、配置、历史、更新等底层服务
-  shared/ui/            # 通用面板、状态、对话框和预览组件
-scripts/                # macOS 打包脚本
-docs/                   # README 截图素材
+    dashboard/          # Environment overview
+    tools/              # Tool versions, install, upgrade, uninstall
+    projects/           # Scan directories and project coverage
+    config/             # Global and project configuration management
+  l10n/                 # English source strings and Chinese translations
+  repositories/         # Page-level data aggregation
+  services/             # mise CLI, config, history, update, and low-level services
+  shared/ui/            # Shared panels, states, dialogs, and preview components
+scripts/                # macOS packaging scripts
+docs/                   # README screenshot assets
 ```
-
-
 
 ## License
 
-本项目使用MIT作为开源协议，详情请移步： [LICENSE.txt](LICENSE.txt)。
+This project is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt) for details.
