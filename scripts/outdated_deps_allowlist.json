@@ -1,0 +1,22 @@
+{
+  "transitive": [
+    {
+      "package": "cross_file",
+      "current": "0.3.5+5",
+      "latest": "0.4.0",
+      "reason": "file_selector_platform_interface 2.7.0 requires cross_file ^0.3.0. The upstream migration to cross_file 0.4.0 is still open in flutter/packages#13147."
+    },
+    {
+      "package": "material_color_utilities",
+      "current": "0.13.0",
+      "latest": "0.13.1",
+      "reason": "Pinned by the Flutter SDK. Flutter 3.47.9 and the latest stable Flutter 3.50.0 both constrain material_color_utilities to 0.13.0."
+    },
+    {
+      "package": "test_api",
+      "current": "0.7.12",
+      "latest": "0.7.15",
+      "reason": "Pinned by the Flutter SDK. Flutter 3.47.9 constrains test_api to 0.7.12; Flutter 3.50.0 uses 0.7.14, so 0.7.15 cannot be resolved on a stable SDK."
+    }
+  ]
+}

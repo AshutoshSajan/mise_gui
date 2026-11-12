@@ -29,19 +29,19 @@ Windows 打包机需要安装 Visual Studio 的 `Desktop development with C++` �
 
 ## 依赖检查与 git hooks
 
-`npm run deps:check` 会运行 `scripts/check_outdated_deps.dart`，检查直接依赖和开发依赖是否都已是最新版本。CI 的 quality job 也会执行同一项检查。
+`npm run deps:check` 会运行 `scripts/check_outdated_deps.dart`，检查直接依赖、开发依赖和传递依赖：
 
-只查看直接依赖和开发依赖的版本状态：
+- 直接依赖和开发依赖必须是最新版本。
+- 传递依赖默认也必须是最新版本，只有 `scripts/outdated_deps_allowlist.json` 中记录过的上游或 Flutter SDK 锁定项可以例外。
+- 如果出现新的过期传递依赖，检查会失败，避免依赖在无人察觉的情况下漂移。
+
+查看完整依赖状态和每个锁定项的原因：
 
 ```bash
 npm run deps:outdated
 ```
 
-该命令等价于 `flutter pub outdated --no-transitive`。普通的 `flutter pub outdated` 默认还会列出传递依赖，但传递依赖通常由 Flutter SDK 或上游包锁定，不能单独升级，也不应该用 `dependency_overrides` 强行覆盖。需要排查全部依赖时才使用：
-
-```bash
-dart run scripts/check_outdated_deps.dart --all
-```
+该命令等价于 `dart run scripts/check_outdated_deps.dart --all`。普通的 `flutter pub outdated` 也会列出传递依赖，但不能用 `dependency_overrides` 强行覆盖 Flutter SDK 或上游包的约束。只有确认是上游锁定、且记录了原因和版本后，才可以把传递依赖加入 `scripts/outdated_deps_allowlist.json`；上游升级后应及时删除对应条目。
 
 需要升级依赖时执行：
 
@@ -50,7 +50,7 @@ npm run deps:update
 flutter pub get
 ```
 
-新增依赖时必须选择 stable 版本，不要添加 beta、rc、dev 或其它预发布版本。
+新增依赖时必须选择 stable 版本，不要添加 beta、rc、dev 或其它预发布版本。能用现有依赖或已有资源实现时，不要新增依赖；如果某个依赖只用于很小的功能，优先移除它而不是把它的传递依赖加入 allowlist。
 
 仓库自带 `.githooks/pre-commit` 和 `.githooks/pre-push`：
 
@@ -78,9 +78,9 @@ npm run macos:release:zip:skip-notarization
 ## 每个脚本做什么
 
 - `deps:check`
-  运行 `scripts/check_outdated_deps.dart`，检查直接依赖和开发依赖是否都是最新版本
+  运行 `scripts/check_outdated_deps.dart`，检查直接依赖、开发依赖和 allowlist 之外的传递依赖
 - `deps:outdated`
-  运行 `flutter pub outdated --no-transitive`，只显示直接依赖和开发依赖
+  运行 `scripts/check_outdated_deps.dart --all`，显示完整依赖状态和每个锁定传递依赖的原因
 - `deps:update`
   执行 `flutter pub upgrade --major-versions`，把可升级的依赖更新到最新主版本
 - `hooks:install`

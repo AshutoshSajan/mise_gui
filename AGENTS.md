@@ -24,21 +24,28 @@ switch.
 - **Always add new stable dependencies only.** Never add beta, rc, dev, alpha,
   nightly, or other pre-release packages.
 - Prefer upgrading an existing package over adding a new dependency.
-- Check direct and development dependencies with:
+- Check all dependencies with:
 
   ```bash
   npm run deps:check
   ```
 
-- Show only direct and development dependencies with:
+- See the full report and the reason for every pinned transitive package with:
 
   ```bash
   npm run deps:outdated
   ```
 
-  This runs `flutter pub outdated --no-transitive`. Plain `flutter pub outdated`
-  also lists transitive packages; those are usually pinned by the Flutter SDK or
-  upstream packages and must not be forced with `dependency_overrides`.
+  `deps:check` fails on outdated direct/dev dependencies and on any outdated
+  transitive dependency that is not documented in
+  `scripts/outdated_deps_allowlist.json`. Flutter SDK pins and upstream
+  constraints belong in that file with a concrete reason. Never use
+  `dependency_overrides` to force them. Remove allowlist entries as soon as
+  upstream publishes a compatible release.
+
+- Prefer removing a small optional dependency over allowlisting its transitive
+  chain. For example, render a static logo from an existing PNG instead of
+  keeping an SVG renderer just for one asset.
 
 - Upgrade dependencies with:
 

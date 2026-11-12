@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/router/app_destination.dart';
@@ -768,11 +767,13 @@ class _BrandBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: SvgPicture.asset(
-        'assets/branding/mise_gui_logo.svg',
+      child: Image.asset(
+        'assets/branding/mise_gui_logo_1024.png',
         width: size,
         height: size,
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).ceil(),
       ),
     );
   }
