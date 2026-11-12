@@ -54,7 +54,7 @@ class _HistoryEntryDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _DialogStatusMeta(
-                          label: entry.status.label,
+                          label: tr(entry.status.label),
                           color: statusColor,
                           muted: !entry.isFailure,
                         ),

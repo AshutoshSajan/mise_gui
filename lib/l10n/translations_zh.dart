@@ -114,6 +114,8 @@ const Map<String, String> appTranslationsZh = <String, String>{
   'Failed': '失败',
   'Success': '成功',
   'Canceled': '已取消',
+  'Build': '构建',
+  'Direct install': '直接安装',
   'Healthy': '正常',
   'Info': '提示',
   'Warning': '注意',

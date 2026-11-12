@@ -266,15 +266,15 @@ class _Sidebar extends ConsumerWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 14),
-                                    const Wrap(
+                                    Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        _RuntimePill(label: 'Java'),
-                                        _RuntimePill(label: 'Python'),
-                                        _RuntimePill(label: 'Go'),
-                                        _RuntimePill(label: 'Node'),
-                                        _RuntimePill(label: 'Flutter'),
+                                        const _RuntimePill(label: 'Java'),
+                                        const _RuntimePill(label: 'Python'),
+                                        const _RuntimePill(label: 'Go'),
+                                        const _RuntimePill(label: 'Node'),
+                                        const _RuntimePill(label: 'Flutter'),
                                         _RuntimePill(label: 'More toolchains'),
                                       ],
                                     ),
@@ -895,6 +895,7 @@ class _MissingMiseExperienceState
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final colors = AppTheme.colorsOf(context);
     final installCommand = recommendedMiseInstallCommand();
     final platformLabel = _currentPlatformLabel();
@@ -961,7 +962,7 @@ class _MissingMiseExperienceState
                         commandCard,
                         if (showFooterBand) ...[
                           const SizedBox(height: 24),
-                          const _MissingMiseFooterBand(),
+                          _MissingMiseFooterBand(),
                         ],
                       ],
                     );
@@ -1075,21 +1076,21 @@ class _MissingHeroText extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              const _StepRow(
+              _StepRow(
                 index: '01',
                 title: 'Run the install command',
                 description:
                     'Use the command on the right to install mise on this system.',
               ),
               const SizedBox(height: 12),
-              const _StepRow(
+              _StepRow(
                 index: '02',
                 title: 'Verify the CLI works',
                 description:
                     'After installing, run `mise --version` to verify the command works.',
               ),
               const SizedBox(height: 12),
-              const _StepRow(
+              _StepRow(
                 index: '03',
                 title: 'Return to the app and check again',
                 description:
@@ -1240,7 +1241,7 @@ class _MissingMiseFooterBand extends StatelessWidget {
             style: TextStyle(color: colors.textMuted, height: 1.55),
           ),
           const SizedBox(height: 18),
-          const Wrap(
+          Wrap(
             spacing: 14,
             runSpacing: 14,
             children: [

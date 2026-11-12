@@ -1281,7 +1281,7 @@ class _OverridesPanel extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Column(
                 children: [
-                  const _OverridesTableHeader(),
+                  _OverridesTableHeader(),
                   const SizedBox(height: 12),
                   for (var index = 0; index < overrideRows.length; index++) ...[
                     _OverridesTableRow(row: overrideRows[index]),

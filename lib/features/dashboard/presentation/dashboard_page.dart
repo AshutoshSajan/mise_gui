@@ -1343,7 +1343,7 @@ class _SystemMetricDetails {
             .where((value) => value.isNotEmpty)) {
       if (line.startsWith('Build ')) {
         chips.add(
-          _SystemInfoChipData(label: 'Build', value: line.substring(6)),
+          _SystemInfoChipData(label: tr('Build'), value: line.substring(6)),
         );
       } else if (line.endsWith(' arch') || line.endsWith(' 架构')) {
         final suffixLength = line.endsWith(' arch') ? 5 : 3;

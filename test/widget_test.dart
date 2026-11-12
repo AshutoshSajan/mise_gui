@@ -410,6 +410,15 @@ void main() {
 
     expect(find.text('mise is not installed on this computer'), findsOneWidget);
     expect(find.text(recommendedMiseInstallCommand()), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MiseGuiApp)),
+    );
+    container.read(appLanguageProvider.notifier).state = AppLanguage.chinese;
+    await tester.pumpAndSettle();
+
+    expect(find.text('这台电脑还没有安装 mise'), findsOneWidget);
+    expect(find.text('安装完成后你会立刻看到'), findsOneWidget);
   });
 
   testWidgets('keeps short missing-mise layout free of footer bubble', (
