@@ -10,10 +10,8 @@ const Map<String, String> appTranslationsZh = <String, String>{
   'Global config': '全局配置',
   'Install mise': '安装 mise',
   'Local environments, unified': '本地环境统一管理',
-  'Manage languages, toolchains, and project version differences in one place.':
-      '集中管理常用语言、工具链和项目版本差异。',
-  'More toolchains': '更多工具链',
   'Install mise first to unlock the sidebar.': '先安装 mise，左侧导航会自动解锁。',
+  'Navigation': '导航',
   'Version {versionLabel}': '版本 {versionLabel}',
   'System': '系统',
   'Light': '浅色',

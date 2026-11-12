@@ -549,8 +549,6 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
     return AppPanel(
       padding: const EdgeInsets.all(22),
       radius: 20,
-      backgroundAlpha: 0.74,
-      borderAlpha: 0.5,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -913,8 +911,6 @@ class _DashboardMetricCard extends StatelessWidget {
           ? const EdgeInsets.fromLTRB(18, 18, 18, 16)
           : const EdgeInsets.all(22),
       radius: cardRadius,
-      backgroundAlpha: 0.74,
-      borderAlpha: 0.5,
       child: child,
     );
 

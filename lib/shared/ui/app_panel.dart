@@ -22,24 +22,29 @@ class AppPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       padding: padding,
       decoration: BoxDecoration(
-        color: colors.panel.withValues(alpha: backgroundAlpha ?? 0.84),
+        color: colors.panel.withValues(
+          alpha: backgroundAlpha ?? (isDark ? 0.84 : 0.92),
+        ),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: colors.border.withValues(alpha: borderAlpha ?? 0.58),
+          color: colors.border.withValues(
+            alpha: borderAlpha ?? (isDark ? 0.58 : 0.85),
+          ),
         ),
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: Theme.of(context).brightness == Brightness.dark
+                  color: isDark
                       ? const Color(0x24000000)
-                      : const Color(0x0F0F172A),
-                  blurRadius: 14,
+                      : const Color(0x140F172A),
+                  blurRadius: isDark ? 14 : 18,
                   offset: const Offset(0, 8),
                 ),
               ]

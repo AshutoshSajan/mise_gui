@@ -1531,6 +1531,7 @@ class _ToolListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasActiveVersion = tool.installedVersions.any(
       (version) => version.isActive,
     );
@@ -1550,8 +1551,17 @@ class _ToolListItem extends StatelessWidget {
     return Material(
       color: selected
           ? colors.info.withValues(alpha: 0.10)
-          : colors.panelRaised.withValues(alpha: 0.84),
-      borderRadius: BorderRadius.circular(22),
+          : isDark
+          ? colors.panelRaised.withValues(alpha: 0.84)
+          : colors.panelMuted.withValues(alpha: 0.72),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(
+          color: selected
+              ? colors.info.withValues(alpha: 0.35)
+              : colors.border.withValues(alpha: isDark ? 0.0 : 0.7),
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
