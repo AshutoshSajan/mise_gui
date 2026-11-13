@@ -2,29 +2,29 @@ import 'package:flutter/material.dart';
 
 enum AppDestination {
   dashboard(
-    label: '总览',
-    description: '环境总览',
+    label: 'Overview',
+    description: 'Environment overview',
     path: '/dashboard',
     icon: Icons.space_dashboard_rounded,
     selectedIcon: Icons.dashboard_customize_rounded,
   ),
   tools(
-    label: '工具',
-    description: '工具版本',
+    label: 'Tools',
+    description: 'Tool versions',
     path: '/tools',
     icon: Icons.handyman_outlined,
     selectedIcon: Icons.handyman_rounded,
   ),
   projects(
-    label: '项目',
-    description: '项目覆盖',
+    label: 'Projects',
+    description: 'Project overrides',
     path: '/projects',
     icon: Icons.workspaces_outline,
     selectedIcon: Icons.workspaces_rounded,
   ),
   config(
-    label: '配置',
-    description: '全局配置',
+    label: 'Config',
+    description: 'Global config',
     path: '/config',
     icon: Icons.tune_outlined,
     selectedIcon: Icons.tune_rounded,

@@ -84,18 +84,18 @@ void main() {
       ScanDirectoryRecord(path: root.path),
     ]);
 
-    expect(projects.map((project) => project.name), ['api', 'app']);
+    expect(projects.map((project) => project.name), ['app', 'api']);
     final appProject = projects.firstWhere((project) => project.name == 'app');
     expect(appProject.configPath, '${app.path}/.node-version');
     expect(appProject.configPaths, ['${app.path}/.node-version']);
-    expect(appProject.environment, 'Node 工作区');
+    expect(appProject.environment, 'Node workspace');
     expect(
       appProject.commandPreview,
       contains('cat ${app.path}/.node-version'),
     );
     expect(appProject.bindings.single.name, 'node');
     expect(appProject.bindings.single.projectVersion, '20.18.0');
-    expect(appProject.bindings.single.source, '项目 .node-version');
+    expect(appProject.bindings.single.source, 'Project .node-version');
   });
 
   test('parses .tool-versions and keeps mise.toml precedence', () async {
@@ -133,8 +133,8 @@ void main() {
       '${project.path}/.tool-versions',
     ]);
     expect(bindings['node']?.projectVersion, '22.3.0');
-    expect(bindings['node']?.source, '项目');
+    expect(bindings['node']?.source, 'Project');
     expect(bindings['python']?.projectVersion, '3.12.4');
-    expect(bindings['python']?.source, '项目 .tool-versions');
+    expect(bindings['python']?.source, 'Project .tool-versions');
   });
 }

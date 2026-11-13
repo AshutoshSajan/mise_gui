@@ -8,6 +8,7 @@ import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/dashboard/application/dashboard_provider.dart';
 import 'package:mise_gui/features/tools/application/tools_provider.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_action_service.dart';
 import 'package:mise_gui/services/mise_cli_service.dart';
@@ -113,7 +114,9 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
         _failedToolIds.remove(toolId);
       });
     } catch (error) {
-      _showFeedback('读取版本详情失败，请稍后重试。');
+      _showFeedback(
+        tr('Failed to load version details. Please try again later.'),
+      );
       if (!mounted) {
         return;
       }
@@ -131,7 +134,7 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
 
   Future<void> _refreshTools() async {
     if (_refreshing) {
-      _showFeedback('工具数据正在刷新，请稍候。');
+      _showFeedback(tr('Tool data is refreshing. Please wait.'));
       return;
     }
 
@@ -149,9 +152,11 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
       if (selectedToolId != null) {
         await _loadToolDetail(selectedToolId, forceRefresh: true);
       }
-      _showFeedback('工具状态已刷新。');
+      _showFeedback(tr('Tool status refreshed.'));
     } catch (_) {
-      _showFeedback('刷新工具状态失败，请稍后重试。');
+      _showFeedback(
+        tr('Failed to refresh tool status. Please try again later.'),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -163,6 +168,7 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final toolsValue = ref.watch(toolsProvider);
 
     return AsyncStateView(
@@ -173,8 +179,10 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
             .toList(growable: false);
 
         return AppPageScaffold(
-          title: '工具版本',
-          description: '按工具查看当前版本，并在需要时升级或卸载。',
+          title: tr('Tool versions'),
+          description: tr(
+            'Review the current version of each tool and upgrade or uninstall when needed.',
+          ),
           actions: [
             OutlinedButton.icon(
               onPressed: _refreshing ? null : _refreshTools,
@@ -185,12 +193,14 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.refresh_rounded),
-              label: Text(_refreshing ? '刷新中...' : '刷新状态'),
+              label: Text(
+                _refreshing ? tr('Refreshing...') : tr('Refresh status'),
+              ),
             ),
             FilledButton.icon(
               onPressed: () => _openInstallToolFlow(context),
               icon: const Icon(Icons.add_circle_outline_rounded),
-              label: const Text('安装工具'),
+              label: Text(tr('Install tool')),
             ),
           ],
           child: _ToolList(
@@ -248,17 +258,32 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
     await _openToolActionPreview(
       context,
       ActionPreviewDialogData(
-        title: '安装 ${request.tool}@${request.version}',
-        summary: '会先安装这个版本，再把它写成全局默认版本。',
+        title: trArgs('Install {tool}@{version}', {
+          'tool': request.tool,
+          'version': request.version,
+        }),
+        summary: tr(
+          'Installs this version first, then sets it as the global default.',
+        ),
         command: '$installCommand\n$useCommand',
         level: HealthLevel.info,
-        affectedFiles: [_globalConfigPath(), 'mise 安装缓存 / 已安装版本'],
-        impactScope: ['会改变全局默认工具版本。', '安装完成后会自动刷新工具页与总览页数据。'],
-        riskNotes: const [
-          '安装时需要访问网络，过程可能会持续一段时间。',
-          '如果版本号无效，安装会失败，失败结果会记录到最近操作。',
+        affectedFiles: [
+          _globalConfigPath(),
+          tr('mise cache / installed versions'),
         ],
-        confirmLabel: '确认安装',
+        impactScope: [
+          tr('Changes the global default tool version.'),
+          tr(
+            'Refreshes the Tools and Overview pages when the install finishes.',
+          ),
+        ],
+        riskNotes: [
+          tr('Installing requires network access and may take a while.'),
+          tr(
+            'If the version is invalid, the install fails and the result is recorded in recent operations.',
+          ),
+        ],
+        confirmLabel: tr('Confirm install'),
       ),
     );
   }
@@ -278,7 +303,7 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
               HistoryEntry(
                 command: data.command,
                 timestamp: _formatNow(),
-                detail: '用户取消了 ${data.title}。',
+                detail: trArgs('User canceled {title}.', {'title': data.title}),
                 level: HealthLevel.info,
                 status: HistoryStatus.canceled,
               ),
@@ -322,9 +347,13 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
         command: data.command,
         timestamp: _formatNow(),
         detail: success
-            ? '已通过界面执行 ${data.title}。'
+            ? trArgs('Ran {title} from the app.', {'title': data.title})
             : _appendLockfileCleanupDetail(
-                diagnosis?.detail ?? '${data.title} 执行失败，已保留实际 CLI 和错误输出。',
+                diagnosis?.detail ??
+                    trArgs(
+                      '{title} failed. The actual CLI command and error output were preserved.',
+                      {'title': data.title},
+                    ),
                 result.lockfileCleanupReport.detail,
               ),
         level: success ? data.level : HealthLevel.warning,
@@ -388,7 +417,10 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
       final historyEntry = HistoryEntry(
         command: data.command,
         timestamp: _formatNow(),
-        detail: '${data.title} 执行异常，界面已拦截并保留错误信息。',
+        detail: trArgs(
+          '{title} raised an error. The app intercepted it and preserved the error details.',
+          {'title': data.title},
+        ),
         level: HealthLevel.warning,
         status: HistoryStatus.failure,
         exitCode: -1,
@@ -396,7 +428,10 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
         stderrSnippet: error.toString(),
       );
       await ref.read(historyServiceProvider).appendEntry(historyEntry);
-      snackMessage = '${data.title} 执行异常，已打开错误详情。';
+      snackMessage = trArgs(
+        '{title} raised an error. Error details were opened.',
+        {'title': data.title},
+      );
       failureEntryToShow = historyEntry;
     } finally {
       if (rootNavigator.mounted && rootNavigator.canPop()) {
@@ -453,15 +488,22 @@ class _ToolsPageState extends ConsumerState<ToolsPage> {
     required bool cleanedLockfiles,
   }) {
     if (success) {
-      return '$title 已执行完成。';
+      return trArgs('{title} completed.', {'title': title});
     }
     if (cleanedLockfiles) {
-      return '$title 执行失败，已清理残留锁文件。';
+      return trArgs('{title} failed. Leftover lock files were cleaned up.', {
+        'title': title,
+      });
     }
     if (diagnosis == null) {
-      return '$title 执行失败，已打开错误详情。';
+      return trArgs('{title} failed. Error details were opened.', {
+        'title': title,
+      });
     }
-    return '$title 执行失败：${diagnosis.summary}';
+    return trArgs('{title} failed: {summary}', {
+      'title': title,
+      'summary': diagnosis.summary,
+    });
   }
 
   String _globalConfigPath() {
@@ -521,7 +563,7 @@ class _ActionProgressState {
       completedCommands: 0,
       currentCommandIndex: 0,
       currentCommand: commands.isEmpty ? command.trim() : commands.first,
-      status: '准备执行',
+      status: tr('Preparing to run'),
       logs: const [],
     );
   }
@@ -537,7 +579,7 @@ class _ActionProgressState {
 
   String get stepLabel {
     if (totalCommands == 0) {
-      return '准备中';
+      return tr('Preparing');
     }
     final index = currentCommandIndex == 0 ? 1 : currentCommandIndex;
     return '$index/$totalCommands';
@@ -548,13 +590,19 @@ class _ActionProgressState {
       MiseActionProgressEventType.commandStarted => _copyWith(
         currentCommandIndex: event.commandIndex,
         currentCommand: event.command,
-        status: '正在执行 ${event.commandIndex}/${event.totalCommands}',
+        status: trArgs('Running {current}/{total}', {
+          'current': event.commandIndex,
+          'total': event.totalCommands,
+        }),
         logs: _appendLogLines(logs, '\$ ${event.command}'),
       ),
       MiseActionProgressEventType.output => _copyWith(
         currentCommandIndex: event.commandIndex,
         currentCommand: event.command,
-        status: '正在执行 ${event.commandIndex}/${event.totalCommands}',
+        status: trArgs('Running {current}/{total}', {
+          'current': event.commandIndex,
+          'total': event.totalCommands,
+        }),
         logs: _appendLogLines(logs, event.output ?? ''),
       ),
       MiseActionProgressEventType.commandFinished => _copyWith(
@@ -564,12 +612,15 @@ class _ActionProgressState {
         currentCommandIndex: event.commandIndex,
         currentCommand: event.command,
         status: event.exitCode == 0
-            ? '已完成 ${event.commandIndex}/${event.totalCommands}'
-            : '执行失败，正在整理结果',
+            ? trArgs('Completed {current}/{total}', {
+                'current': event.commandIndex,
+                'total': event.totalCommands,
+              })
+            : tr('Run failed. Collecting results.'),
         logs: _appendLogLines(logs, 'exit ${event.exitCode ?? -1}'),
       ),
       MiseActionProgressEventType.lockfileCleanup => _copyWith(
-        status: '已处理异常状态',
+        status: tr('Handled error state'),
         logs: _appendLogLines(logs, event.lockfileCleanupReport?.detail ?? ''),
       ),
     };
@@ -773,7 +824,7 @@ class _ActionLogView extends StatelessWidget {
           ? Align(
               alignment: Alignment.topLeft,
               child: Text(
-                '等待 mise 输出...',
+                tr('Waiting for mise output...'),
                 style: TextStyle(color: colors.textMuted),
               ),
             )
@@ -869,12 +920,16 @@ class _ToolWorkspaceError extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$toolName 详情读取失败',
+                  trArgs('Could not load details for {tool}', {
+                    'tool': toolName,
+                  }),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '可能是远端版本同步暂时不可用，或者当前网络无法访问 mise 数据源。',
+                  tr(
+                    'Remote version sync may be temporarily unavailable, or the current network cannot reach the mise data source.',
+                  ),
                   style: TextStyle(color: colors.textMuted, height: 1.5),
                 ),
               ],
@@ -885,7 +940,7 @@ class _ToolWorkspaceError extends StatelessWidget {
             key: ValueKey('retry-tool-detail-$toolName'),
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('重试'),
+            label: Text(tr('Retry')),
           ),
         ],
       ),
@@ -946,7 +1001,7 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
     if (mounted) {
       setState(() {
         _versionSuggestions = const [];
-        _lookupMessage = tool.isEmpty ? null : '正在读取远端版本...';
+        _lookupMessage = tool.isEmpty ? null : tr('Loading remote versions...');
         _loadingVersions = tool.isNotEmpty;
       });
     }
@@ -987,7 +1042,11 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
       setState(() {
         _loadingVersions = false;
         _versionSuggestions = selected;
-        _lookupMessage = selected.isEmpty ? '没有拉到可选版本，仍可手动输入。' : null;
+        _lookupMessage = selected.isEmpty
+            ? tr(
+                'No selectable versions found. You can still enter one manually.',
+              )
+            : null;
       });
     } catch (error) {
       if (!mounted || token != _lookupToken) {
@@ -996,7 +1055,9 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
       setState(() {
         _loadingVersions = false;
         _versionSuggestions = const [];
-        _lookupMessage = '远端版本读取失败，仍可手动输入版本号。';
+        _lookupMessage = tr(
+          'Could not load remote versions. You can still enter a version manually.',
+        );
       });
     }
   }
@@ -1026,27 +1087,32 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('安装新工具', style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              tr('Install a new tool'),
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: 10),
             Text(
-              '输入要安装的工具名和版本，随后会进入执行前预览与确认。',
+              tr(
+                'Enter the tool name and version. You will review the command before it runs.',
+              ),
               style: TextStyle(color: colors.textMuted, height: 1.55),
             ),
             const SizedBox(height: 18),
             TextField(
               controller: _toolController,
-              decoration: const InputDecoration(
-                labelText: 'Tool',
-                hintText: '例如: node / python / go / php',
+              decoration: InputDecoration(
+                labelText: tr('Tool'),
+                hintText: tr('e.g. node / python / go / php'),
               ),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: _versionController,
               focusNode: _versionFocusNode,
-              decoration: const InputDecoration(
-                labelText: 'Version',
-                hintText: '例如: 20 或 20.19.0 / 3.12 或 3.12.9 / latest',
+              decoration: InputDecoration(
+                labelText: tr('Version'),
+                hintText: tr('e.g. 20 or 20.19.0 / 3.12 or 3.12.9 / latest'),
               ),
             ),
             if (_versionFocusNode.hasFocus &&
@@ -1071,7 +1137,7 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
             ],
             const SizedBox(height: 18),
             Text(
-              '安装后会直接写成全局默认版本。',
+              tr('The installed version becomes the global default.'),
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 13,
@@ -1084,13 +1150,13 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
               children: [
                 OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('取消'),
+                  child: Text(tr('Cancel')),
                 ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: _submit,
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('继续预览'),
+                  label: Text(tr('Continue to preview')),
                 ),
               ],
             ),
@@ -1104,9 +1170,9 @@ class _InstallToolDialogState extends ConsumerState<_InstallToolDialog> {
     final tool = _toolController.text.trim();
     final version = _versionController.text.trim();
     if (tool.isEmpty || version.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先填写工具名和版本号。')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Enter both a tool name and a version.'))),
+      );
       return;
     }
 
@@ -1155,7 +1221,9 @@ class _VersionSuggestionList extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
                   child: Text(
-                    '远端可选版本（各大版本最新发行版）',
+                    tr(
+                      'Available remote versions (latest release of each major line)',
+                    ),
                     style: TextStyle(
                       color: colors.textMuted,
                       fontSize: 12,
@@ -1175,7 +1243,10 @@ class _VersionSuggestionList extends StatelessWidget {
           : Padding(
               padding: const EdgeInsets.all(8),
               child: Text(
-                message ?? '没有拉到可选版本，仍可手动输入。',
+                message ??
+                    tr(
+                      'No selectable versions found. You can still enter one manually.',
+                    ),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
             ),
@@ -1236,7 +1307,7 @@ class _VersionSuggestionRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '最新',
+                      tr('Latest'),
                       style: TextStyle(
                         color: colors.accent,
                         fontSize: 11,
@@ -1292,10 +1363,12 @@ class _ToolList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('已安装', style: Theme.of(context).textTheme.titleLarge),
+          Text(tr('Installed'), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
-            '按工具查看当前版本，并按需加载可升级信息。',
+            tr(
+              'Review the current version of each tool and load upgrade information on demand.',
+            ),
             style: TextStyle(color: colors.textMuted, height: 1.5),
           ),
           const SizedBox(height: 18),
@@ -1372,7 +1445,7 @@ class _ToolAccordionItem extends StatelessWidget {
           transitionBuilder: (child, animation) {
             return SizeTransition(
               sizeFactor: animation,
-              axisAlignment: -1,
+              alignment: Alignment.topCenter,
               child: FadeTransition(opacity: animation, child: child),
             );
           },
@@ -1391,8 +1464,10 @@ class _ToolAccordionItem extends StatelessWidget {
       return _AccordionDetailShell(
         key: ValueKey('loading-detail-${tool.id}'),
         child: _ToolWorkspaceLoading(
-          title: '正在读取 ${tool.name} 的详情',
-          message: '远端版本和详细信息返回后，会在这里展开。',
+          title: trArgs('Loading details for {tool}', {'tool': tool.name}),
+          message: tr(
+            'Remote versions and details will appear here when they are available.',
+          ),
         ),
       );
     }
@@ -1456,6 +1531,7 @@ class _ToolListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasActiveVersion = tool.installedVersions.any(
       (version) => version.isActive,
     );
@@ -1465,18 +1541,27 @@ class _ToolListItem extends StatelessWidget {
       detailFailed,
       tool.remoteState,
     )) {
-      (true, _, _, _) => '加载中...',
-      (false, _, true, _) => '读取失败',
-      (false, false, _, _) => '点击查看',
-      (false, true, _, ToolRemoteState.unavailable) => '未获取',
+      (true, _, _, _) => tr('Loading...'),
+      (false, _, true, _) => tr('Load failed'),
+      (false, false, _, _) => tr('Click to view'),
+      (false, true, _, ToolRemoteState.unavailable) => tr('Not loaded'),
       _ => tool.latestStableVersion,
     };
 
     return Material(
       color: selected
           ? colors.info.withValues(alpha: 0.10)
-          : colors.panelRaised.withValues(alpha: 0.84),
-      borderRadius: BorderRadius.circular(22),
+          : isDark
+          ? colors.panelRaised.withValues(alpha: 0.84)
+          : colors.panelMuted.withValues(alpha: 0.72),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(
+          color: selected
+              ? colors.info.withValues(alpha: 0.35)
+              : colors.border.withValues(alpha: isDark ? 0.0 : 0.7),
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
@@ -1500,17 +1585,20 @@ class _ToolListItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(tool.category, style: TextStyle(color: colors.textMuted)),
+              Text(
+                tr(tool.category),
+                style: TextStyle(color: colors.textMuted),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
                   _MiniFact(
-                    label: hasActiveVersion ? '当前' : '已装',
+                    label: hasActiveVersion ? tr('Current') : tr('Installed'),
                     value: tool.activeVersion,
                   ),
-                  _MiniFact(label: '最新', value: latestValue),
+                  _MiniFact(label: tr('Latest'), value: latestValue),
                 ],
               ),
             ],
@@ -1548,32 +1636,36 @@ class _ToolWorkspace extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _VersionInventoryPanel(
-          title: '本机版本',
-          subtitle: '已安装到本机，可直接切换。',
+          title: tr('Local versions'),
+          subtitle: tr('Installed locally and ready to switch.'),
           toolId: tool.id,
           toolName: tool.name,
           inventoryType: _VersionInventoryType.installed,
           versions: tool.installedVersions,
-          emptyState: const _PanelEmptyStateData(
+          emptyState: _PanelEmptyStateData(
             icon: Icons.inventory_2_outlined,
-            title: '当前还没有本地版本库存',
-            message: '安装过至少一个版本后，这里会显示完整的本机版本列表。',
+            title: tr('No local versions yet'),
+            message: tr(
+              'Install at least one version to see the full local version list here.',
+            ),
             level: HealthLevel.info,
           ),
           onOpenPreview: onOpenPreview,
         ),
         const SizedBox(height: 18),
         _VersionInventoryPanel(
-          title: '远端版本',
-          subtitle: '可安装或升级的远端版本。',
+          title: tr('Remote versions'),
+          subtitle: tr('Remote versions available to install or upgrade.'),
           toolId: tool.id,
           toolName: tool.name,
           inventoryType: _VersionInventoryType.remote,
           versions: tool.remoteVersions,
-          emptyState: const _PanelEmptyStateData(
+          emptyState: _PanelEmptyStateData(
             icon: Icons.cloud_off_rounded,
-            title: '暂时没有拉到远端版本',
-            message: '可以稍后重试同步，或者先使用上面的本机版本库存继续切换。',
+            title: tr('No remote versions loaded yet'),
+            message: tr(
+              'Retry the sync later, or keep switching between the local versions above.',
+            ),
             level: HealthLevel.warning,
           ),
           onOpenPreview: onOpenPreview,
@@ -1603,8 +1695,8 @@ class _ToolHeroPanel extends StatelessWidget {
     final colors = AppTheme.colorsOf(context);
     final recommendedVersion = _recommendedVersion(tool);
     final latestLabel = switch (tool.remoteState) {
-      ToolRemoteState.pending => '读取中',
-      ToolRemoteState.unavailable => '未获取',
+      ToolRemoteState.pending => tr('Loading'),
+      ToolRemoteState.unavailable => tr('Not loaded'),
       ToolRemoteState.ready => tool.latestStableVersion,
     };
 
@@ -1631,7 +1723,9 @@ class _ToolHeroPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SelectableText(
-                      '当前 ${tool.activeVersion}',
+                      trArgs('Current {version}', {
+                        'version': tool.activeVersion,
+                      }),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontFamily: 'FiraCode',
                         fontSize: 16,
@@ -1639,7 +1733,9 @@ class _ToolHeroPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '最新稳定版 $latestLabel',
+                      trArgs('Latest stable {version}', {
+                        'version': latestLabel,
+                      }),
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: 13,
@@ -1658,28 +1754,47 @@ class _ToolHeroPanel extends StatelessWidget {
                       onPressed: () => onOpenPreview(
                         context,
                         ActionPreviewDialogData(
-                          title:
-                              '升级 ${tool.name} 到 ${recommendedVersion.version}',
-                          summary: '会先安装新版本，再切换到这个版本。',
+                          title: trArgs('Upgrade {tool} to {version}', {
+                            'tool': tool.name,
+                            'version': recommendedVersion.version,
+                          }),
+                          summary: tr(
+                            'Installs the new version first, then switches to it.',
+                          ),
                           command: recommendedVersion.commandPreview,
                           level: HealthLevel.healthy,
                           affectedFiles: _affectedFilesForToolCommand(
                             recommendedVersion.commandPreview,
                           ),
-                          impactScope: const ['会新增本地已安装版本。', '默认使用的版本会切换到新版本。'],
-                          riskNotes: const ['升级时需要访问网络，过程可能会持续一段时间。'],
-                          confirmLabel: '确认升级',
+                          impactScope: [
+                            tr('Adds a local installed version.'),
+                            tr(
+                              'The default active version switches to the new version.',
+                            ),
+                          ],
+                          riskNotes: [
+                            tr(
+                              'Upgrading requires network access and may take a while.',
+                            ),
+                          ],
+                          confirmLabel: tr('Confirm upgrade'),
                         ),
                       ),
                       icon: const Icon(Icons.upgrade_rounded),
-                      label: Text('升级到 ${recommendedVersion.version}'),
+                      label: Text(
+                        trArgs('Upgrade to {version}', {
+                          'version': recommendedVersion.version,
+                        }),
+                      ),
                     ),
                   TextButton.icon(
                     onPressed: () => onOpenPreview(
                       context,
                       ActionPreviewDialogData(
-                        title: '卸载 ${tool.name}',
-                        summary: '会先从全局配置里移除这个工具，再删除本机上这个工具的所有已安装版本。',
+                        title: trArgs('Uninstall {tool}', {'tool': tool.name}),
+                        summary: tr(
+                          'Removes the tool from global config first, then deletes every installed version of the tool on this machine.',
+                        ),
                         command:
                             'mise use --global --remove ${tool.id}\n'
                             'mise uninstall --all ${tool.id}',
@@ -1688,17 +1803,27 @@ class _ToolHeroPanel extends StatelessWidget {
                           'mise use --global --remove ${tool.id}\n'
                           'mise uninstall --all ${tool.id}',
                         ),
-                        impactScope: const [
-                          '全局默认配置里不再声明这个工具。',
-                          '这个工具的所有本地已安装版本都会被移除。',
-                          '如果其他配置仍然依赖这个工具，相关命令仍可能报缺失。',
+                        impactScope: [
+                          tr(
+                            'The tool is no longer declared in global config.',
+                          ),
+                          tr(
+                            'All locally installed versions of this tool are removed.',
+                          ),
+                          tr(
+                            'Commands may still fail if other configs depend on this tool.',
+                          ),
                         ],
-                        riskNotes: const ['卸载前请确认没有其他配置还在依赖这个工具。'],
-                        confirmLabel: '确认卸载',
+                        riskNotes: [
+                          tr(
+                            'Confirm no other config depends on this tool before uninstalling.',
+                          ),
+                        ],
+                        confirmLabel: tr('Confirm uninstall'),
                       ),
                     ),
                     icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    label: const Text('卸载工具'),
+                    label: Text(tr('Uninstall tool')),
                   ),
                 ],
               ),
@@ -1711,7 +1836,9 @@ class _ToolHeroPanel extends StatelessWidget {
                 for (final notice in tool.notices) ...[
                   InlineNoticeBar(
                     notice: notice,
-                    actionLabel: _canRetryRemoteNotice(notice) ? '重试' : null,
+                    actionLabel: _canRetryRemoteNotice(notice)
+                        ? tr('Retry')
+                        : null,
                     actionIcon: _canRetryRemoteNotice(notice)
                         ? Icons.refresh_rounded
                         : null,
@@ -1731,7 +1858,9 @@ class _ToolHeroPanel extends StatelessWidget {
 
   bool _canRetryRemoteNotice(InlineNotice notice) {
     return tool.remoteState == ToolRemoteState.unavailable &&
-        notice.title.contains('远端目录暂时不可用');
+        notice.title.toLowerCase().contains(
+          'remote directory temporarily unavailable',
+        );
   }
 
   ToolVersionRecord? _recommendedVersion(ToolRecord tool) {
@@ -1789,17 +1918,24 @@ class _VersionInventoryPanel extends StatelessWidget {
           _ToolSectionHeader(
             title: title,
             subtitle: subtitle,
-            badgeLabel: versions.length > 1 ? '${versions.length} 条' : null,
+            badgeLabel: versions.length > 1
+                ? trArgs(
+                    '{count, plural, one {# version} other {# versions}}',
+                    {'count': versions.length},
+                  )
+                : null,
           ),
           const SizedBox(height: 18),
           if (versions.isEmpty)
             _PanelEmptyStateCard(
               data:
                   emptyState ??
-                  const _PanelEmptyStateData(
+                  _PanelEmptyStateData(
                     icon: Icons.info_outline_rounded,
-                    title: '当前没有可展示的数据',
-                    message: '稍后可以重新同步，或先使用当前本机版本继续操作。',
+                    title: tr('No data to display'),
+                    message: tr(
+                      'Sync again later, or continue with the current local versions.',
+                    ),
                     level: HealthLevel.info,
                   ),
               onOpenPreview: onOpenPreview,
@@ -1915,13 +2051,13 @@ class _VersionCard extends StatelessWidget {
 
   String? _statusLabel() {
     if (version.isActive) {
-      return '当前使用';
+      return tr('In use');
     }
     if (version.isRecommended) {
-      return '推荐升级';
+      return tr('Upgrade recommended');
     }
     if (version.isAlias) {
-      return '别名映射';
+      return tr('Alias mapping');
     }
     return null;
   }
@@ -1969,38 +2105,62 @@ class _VersionActions extends StatelessWidget {
             onPressed: () => onOpenPreview(
               context,
               ActionPreviewDialogData(
-                title: '切换到 ${version.version}',
-                summary: '这个版本已经在本机安装，确认后会开始版本切换。',
+                title: trArgs('Switch to {version}', {
+                  'version': version.version,
+                }),
+                summary: tr(
+                  'This version is already installed locally. Confirming will switch to it.',
+                ),
                 command: version.commandPreview,
                 level: version.level,
                 affectedFiles: _affectedFilesForToolCommand(
                   version.commandPreview,
                 ),
-                impactScope: const ['当前工具的默认激活版本会变化。', '相关项目的解析结果可能随之更新。'],
-                riskNotes: const ['切换前请先确认是否有项目级版本覆盖。'],
-                confirmLabel: '确认切换',
+                impactScope: [
+                  tr('The default active version for this tool changes.'),
+                  tr('Resolved versions for related projects may update.'),
+                ],
+                riskNotes: [
+                  tr('Check for project-level overrides before switching.'),
+                ],
+                confirmLabel: tr('Confirm switch'),
               ),
             ),
-            child: const Text('切换'),
+            child: Text(tr('Switch')),
           )
         else if (!version.isInstalled)
           TextButton(
             onPressed: () => onOpenPreview(
               context,
               ActionPreviewDialogData(
-                title: '安装 ${version.version}',
-                summary: '这个版本还没安装到本机，确认后会开始安装。',
+                title: trArgs('Install {version}', {
+                  'version': version.version,
+                }),
+                summary: tr(
+                  'This version is not installed locally. Confirming will start the install.',
+                ),
                 command: version.commandPreview,
                 level: version.level,
                 affectedFiles: _affectedFilesForToolCommand(
                   version.commandPreview,
                 ),
-                impactScope: const ['会新增本地已安装版本记录。', '如果接着激活，当前版本来源也可能改变。'],
-                riskNotes: const ['安装时会访问网络，并更新本地缓存。'],
-                confirmLabel: version.isRecommended ? '确认升级' : '确认安装',
+                impactScope: [
+                  tr('Adds a local installed version record.'),
+                  tr(
+                    'The active version source may change if it is activated next.',
+                  ),
+                ],
+                riskNotes: [
+                  tr(
+                    'Installing accesses the network and updates the local cache.',
+                  ),
+                ],
+                confirmLabel: version.isRecommended
+                    ? tr('Confirm upgrade')
+                    : tr('Confirm install'),
               ),
             ),
-            child: Text(version.isRecommended ? '升级' : '安装'),
+            child: Text(version.isRecommended ? tr('Upgrade') : tr('Install')),
           ),
         if (inventoryType == _VersionInventoryType.installed &&
             version.isInstalled)
@@ -2008,27 +2168,47 @@ class _VersionActions extends StatelessWidget {
             onPressed: () => onOpenPreview(
               context,
               ActionPreviewDialogData(
-                title: '卸载 $toolName ${version.version}',
+                title: trArgs('Uninstall {tool} {version}', {
+                  'tool': toolName,
+                  'version': version.version,
+                }),
                 summary: version.isActive
-                    ? '这个版本当前正在使用。卸载只会删除本机安装目录，不会修改全局或项目配置。'
-                    : '会删除本机这个已安装版本，不会修改全局或项目配置。',
+                    ? tr(
+                        'This version is currently in use. Uninstalling only removes the local install and does not change global or project config.',
+                      )
+                    : tr(
+                        'Removes this locally installed version without changing global or project config.',
+                      ),
                 command: 'mise uninstall $toolId@${version.version}',
                 level: HealthLevel.warning,
                 affectedFiles: _affectedFilesForToolCommand(
                   'mise uninstall $toolId@${version.version}',
                 ),
-                impactScope: const ['只移除这个具体版本的本地安装记录。', '全局和项目配置不会被自动修改。'],
+                impactScope: [
+                  tr('Removes only this specific local install.'),
+                  tr(
+                    'Global and project configs are not changed automatically.',
+                  ),
+                ],
                 riskNotes: version.isActive
-                    ? const [
-                        '当前生效版本被删除后，如果配置仍引用它，后续命令可能提示缺失。',
-                        '卸载前请确认已经切换到其他版本，或准备重新安装。',
+                    ? [
+                        tr(
+                          'If the active version is removed and config still references it, later commands may report it as missing.',
+                        ),
+                        tr(
+                          'Switch to another version or be ready to reinstall before uninstalling.',
+                        ),
                       ]
-                    : const ['如果其他项目配置仍引用这个版本，进入项目后可能需要重新安装。'],
-                confirmLabel: '确认卸载版本',
+                    : [
+                        tr(
+                          'If another project config still references this version, you may need to reinstall it after entering that project.',
+                        ),
+                      ],
+                confirmLabel: tr('Confirm uninstall version'),
               ),
             ),
             icon: const Icon(Icons.delete_outline_rounded, size: 18),
-            label: const Text('卸载'),
+            label: Text(tr('Uninstall')),
           ),
       ],
     );
@@ -2288,11 +2468,11 @@ List<String> _affectedFilesForToolCommand(String command) {
   }
 
   if (normalized.contains('mise install ')) {
-    files.add('mise 安装缓存 / 已安装版本');
+    files.add(tr('mise cache / installed versions'));
   }
 
   if (normalized.contains('mise uninstall ')) {
-    files.add('mise 安装缓存 / 已安装版本');
+    files.add(tr('mise cache / installed versions'));
   }
 
   return files;

@@ -71,28 +71,28 @@ class AppTheme {
   );
 
   static const AppPalette lightPalette = AppPalette(
-    background: Color(0xFFF4F7FB),
+    background: Color(0xFFEDF2F9),
     backgroundSoft: Color(0xFFFFFFFF),
-    backgroundDeep: Color(0xFFE8EEF7),
-    panel: Color(0xFFF7FAFE),
+    backgroundDeep: Color(0xFFE1E9F3),
+    panel: Color(0xFFFFFFFF),
     panelRaised: Color(0xFFFFFFFF),
-    panelMuted: Color(0xFFEAF0F8),
-    border: Color(0xFFD7E0EC),
-    borderStrong: Color(0xFFB7C6D9),
-    accent: Color(0xFF16A34A),
-    info: Color(0xFF0284C7),
-    warning: Color(0xFFD97706),
-    danger: Color(0xFFDC2626),
-    textPrimary: Color(0xFF182235),
-    textMuted: Color(0xFF64748B),
-    hover: Color(0x140284C7),
+    panelMuted: Color(0xFFEDF2F9),
+    border: Color(0xFFD2DEEB),
+    borderStrong: Color(0xFFA6B9D0),
+    accent: Color(0xFF15803D),
+    info: Color(0xFF0369A1),
+    warning: Color(0xFFB45309),
+    danger: Color(0xFFB91C1C),
+    textPrimary: Color(0xFF16202F),
+    textMuted: Color(0xFF5A6A80),
+    hover: Color(0x140369A1),
     heroGradient: LinearGradient(
-      colors: [Color(0xFFFFFFFF), Color(0xFFF1F6FF), Color(0xFFE8FFF1)],
+      colors: [Color(0xFFFFFFFF), Color(0xFFF1F7FF), Color(0xFFE9FAF0)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
     backdropGradient: LinearGradient(
-      colors: [Color(0xFFF8FAFD), Color(0xFFF1F5FB), Color(0xFFE7EEF7)],
+      colors: [Color(0xFFF7FAFE), Color(0xFFEDF3FA), Color(0xFFE4ECF6)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
@@ -220,41 +220,39 @@ class AppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return palette.panelMuted.withValues(alpha: isDark ? 0.5 : 0.7);
+              return palette.panelMuted.withValues(alpha: isDark ? 0.58 : 0.8);
             }
             if (states.contains(WidgetState.pressed)) {
-              return palette.accent.withValues(alpha: isDark ? 0.3 : 0.2);
+              return _mix(
+                palette.accent,
+                isDark ? Colors.white : Colors.black,
+                isDark ? 0.18 : 0.16,
+              );
             }
             if (states.contains(WidgetState.hovered)) {
-              return palette.accent.withValues(alpha: isDark ? 0.26 : 0.18);
+              return _mix(
+                palette.accent,
+                isDark ? Colors.white : Colors.black,
+                isDark ? 0.1 : 0.08,
+              );
             }
-            return palette.accent.withValues(alpha: isDark ? 0.22 : 0.14);
+            return palette.accent;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return palette.textMuted.withValues(alpha: 0.7);
+              return palette.textMuted.withValues(alpha: 0.62);
             }
-            return isDark ? palette.accent : palette.info;
+            return colorScheme.onPrimary;
           }),
           overlayColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return palette.info.withValues(alpha: 0.08);
+            if (states.contains(WidgetState.focused)) {
+              return colorScheme.onPrimary.withValues(alpha: 0.12);
             }
-            if (states.contains(WidgetState.hovered)) {
-              return palette.info.withValues(alpha: 0.04);
-            }
-            return null;
+            return Colors.transparent;
           }),
-          side: WidgetStateProperty.resolveWith((states) {
-            final alpha = states.contains(WidgetState.disabled)
-                ? 0.18
-                : states.contains(WidgetState.selected)
-                ? 0.4
-                : isDark
-                ? 0.45
-                : 0.34;
-            return BorderSide(color: palette.accent.withValues(alpha: alpha));
-          }),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: Colors.transparent),
+          ),
           elevation: const WidgetStatePropertyAll(0),
           shadowColor: WidgetStatePropertyAll(
             palette.backgroundDeep.withValues(alpha: isDark ? 0.18 : 0.08),
@@ -268,9 +266,9 @@ class AppTheme {
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
           iconColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return palette.textMuted.withValues(alpha: 0.7);
+              return palette.textMuted.withValues(alpha: 0.62);
             }
-            return isDark ? palette.accent : palette.info;
+            return colorScheme.onPrimary;
           }),
         ),
       ),
@@ -310,7 +308,7 @@ class AppTheme {
               return BorderSide(color: palette.border.withValues(alpha: 0.4));
             }
             return BorderSide(
-              color: palette.borderStrong.withValues(alpha: isDark ? 0.7 : 0.5),
+              color: palette.borderStrong.withValues(alpha: isDark ? 0.7 : 0.6),
             );
           }),
           elevation: const WidgetStatePropertyAll(0),
@@ -456,4 +454,8 @@ class AppTheme {
       color: color,
     );
   }
+}
+
+Color _mix(Color base, Color overlay, double alpha) {
+  return Color.alphaBlend(overlay.withValues(alpha: alpha), base);
 }

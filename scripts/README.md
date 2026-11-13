@@ -6,6 +6,10 @@
 
 ```bash
 npm run help
+npm run deps:check
+npm run deps:outdated
+npm run deps:update
+npm run hooks:install
 npm run macos:dmg:background
 npm run macos:dmg:background:2x
 npm run macos:debug:dmg
@@ -23,6 +27,44 @@ Windows 包必须在 Windows 机器上构建，Linux 包必须在 Linux 机器�
 
 Windows 打包机需要安装 Visual Studio 的 `Desktop development with C++` 工作负载。Linux 打包机需要安装 Flutter Linux 桌面工具链依赖，例如 `clang`、`cmake`、`ninja-build`、`pkg-config`、`libgtk-3-dev`。
 
+## 依赖检查与 git hooks
+
+`npm run deps:check` 会运行 `scripts/check_outdated_deps.dart`，检查直接依赖、开发依赖和传递依赖：
+
+- 直接依赖和开发依赖必须是最新版本。
+- 传递依赖默认也必须是最新版本，只有 `scripts/outdated_deps_allowlist.json` 中记录过的上游或 Flutter SDK 锁定项可以例外。
+- 如果出现新的过期传递依赖，检查会失败，避免依赖在无人察觉的情况下漂移。
+
+查看完整依赖状态和每个锁定项的原因：
+
+```bash
+npm run deps:outdated
+```
+
+该命令等价于 `dart run scripts/check_outdated_deps.dart --all`。普通的 `flutter pub outdated` 也会列出传递依赖，但不能用 `dependency_overrides` 强行覆盖 Flutter SDK 或上游包的约束。只有确认是上游锁定、且记录了原因和版本后，才可以把传递依赖加入 `scripts/outdated_deps_allowlist.json`；上游升级后应及时删除对应条目。
+
+需要升级依赖时执行：
+
+```bash
+npm run deps:update
+flutter pub get
+```
+
+新增依赖时必须选择 stable 版本，不要添加 beta、rc、dev 或其它预发布版本。能用现有依赖或已有资源实现时，不要新增依赖；如果某个依赖只用于很小的功能，优先移除它而不是把它的传递依赖加入 allowlist。
+
+仓库自带 `.githooks/pre-commit` 和 `.githooks/pre-push`：
+
+- `pre-commit`：暂存区包含 `pubspec.yaml` 时检查依赖版本
+- `pre-push`：推送前检查依赖版本
+
+启用 hooks：
+
+```bash
+npm run hooks:install
+```
+
+临时跳过 pre-push 检查可以设置 `SKIP_OUTDATED_DEPS_CHECK=1`。如果只想记录问题而不让检查失败，可以设置 `ALLOW_OUTDATED_DEPS=1`。
+
 ## 跳过公证
 
 如果你只想本地快速出包验证，不走 Apple notarization，可以用这些命令：
@@ -35,6 +77,14 @@ npm run macos:release:zip:skip-notarization
 
 ## 每个脚本做什么
 
+- `deps:check`
+  运行 `scripts/check_outdated_deps.dart`，检查直接依赖、开发依赖和 allowlist 之外的传递依赖
+- `deps:outdated`
+  运行 `scripts/check_outdated_deps.dart --all`，显示完整依赖状态和每个锁定传递依赖的原因
+- `deps:update`
+  执行 `flutter pub upgrade --major-versions`，把可升级的依赖更新到最新主版本
+- `hooks:install`
+  运行 `scripts/setup_git_hooks.sh`，把当前仓库的 `core.hooksPath` 指向 `.githooks`
 - `macos:dmg:background`
   生成 DMG 背景图，默认输出到 `packaging/macos/dmg-background.png` 和 `packaging/macos/dmg-background@2x.png`
 - `macos:debug:dmg`

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 import 'package:mise_gui/services/mise_query_service.dart';
@@ -42,7 +43,7 @@ class LiveMiseCliService implements MiseCliService {
       final settings = await _queryService.fetchSettings();
 
       final activeSummary = currentTools.isEmpty
-          ? '当前目录还没有解析出活跃工具。'
+          ? tr('No active tools resolved for the current directory.')
           : currentTools
                 .map((tool) => '${tool.tool} ${tool.version}')
                 .join(' / ');
@@ -62,47 +63,68 @@ class LiveMiseCliService implements MiseCliService {
       return [
         if (shellEnvironment.source == ShellEnvironmentSource.desktopFallback)
           EnvironmentSignal(
-            title: 'Shell 环境',
-            value: '已回退',
+            title: tr('Shell environment'),
+            value: tr('Fallback'),
             detail:
                 shellEnvironment.detail ??
-                '未能可靠读取登录 shell 环境，已回退到桌面进程环境。PATH 与 JAVA_HOME 判断会更保守，但基础功能仍可继续使用。',
+                tr(
+                  'Could not reliably read the login shell environment, so the desktop process environment is used. PATH and JAVA_HOME checks are more conservative, but core features still work.',
+                ),
             level: HealthLevel.info,
           ),
         EnvironmentSignal(
-          title: '活跃工具链',
-          value: '${currentTools.length} 个活跃项',
+          title: tr('Active toolchain'),
+          value: trArgs(
+            '{count, plural, one {# active item} other {# active items}}',
+            {'count': currentTools.length},
+          ),
           detail: activeSummary,
           level: currentTools.isEmpty
               ? HealthLevel.warning
               : HealthLevel.healthy,
         ),
         EnvironmentSignal(
-          title: 'PATH 导出',
-          value: '$miseInstallEntries 段路径',
+          title: tr('PATH export'),
+          value: trArgs(
+            '{count, plural, one {# path entry} other {# path entries}}',
+            {'count': miseInstallEntries},
+          ),
           detail: miseInstallEntries == 0
-              ? 'mise env -J 没有导出任何安装目录，后续命令解析很可能不稳定。'
-              : '当前 PATH 已注入 $miseInstallEntries 段 mise 安装目录，界面可以据此解释命令来源。',
+              ? tr(
+                  'mise env -J did not export any install directories, so command resolution may be unstable.',
+                )
+              : trArgs(
+                  'PATH currently includes {count} mise install directories, which the UI can use to explain command sources.',
+                  {'count': miseInstallEntries},
+                ),
           level: miseInstallEntries == 0
               ? HealthLevel.warning
               : HealthLevel.healthy,
         ),
         EnvironmentSignal(
           title: 'JAVA_HOME',
-          value: javaHome == null || javaHome.isEmpty ? '未导出' : '已导出',
+          value: javaHome == null || javaHome.isEmpty
+              ? tr('Not exported')
+              : tr('Exported'),
           detail: javaHome == null || javaHome.isEmpty
-              ? '当前环境没有导出 JAVA_HOME，Java 相关构建可能依赖额外 shell 配置。'
+              ? tr(
+                  'JAVA_HOME is not exported in the current environment; Java builds may depend on extra shell configuration.',
+                )
               : javaHome,
           level: javaHome == null || javaHome.isEmpty
               ? HealthLevel.warning
               : HealthLevel.healthy,
         ),
         EnvironmentSignal(
-          title: '配置来源',
-          value: settingSources.isEmpty ? '未发现' : '已读取',
+          title: tr('Config sources'),
+          value: settingSources.isEmpty ? tr('Not found') : tr('Loaded'),
           detail: settingSources.isEmpty
-              ? '暂时没有从 settings 命令读到显式配置来源，后续会继续补全 config 读取。'
-              : '当前设置来源: ${settingSources.join(' / ')}',
+              ? tr(
+                  'No explicit configuration source was read from the settings command yet; config reading will be filled in later.',
+                )
+              : trArgs('Current setting sources: {sources}', {
+                  'sources': settingSources.join(' / '),
+                }),
           level: settingSources.isEmpty ? HealthLevel.info : HealthLevel.info,
         ),
       ];
@@ -110,43 +132,56 @@ class LiveMiseCliService implements MiseCliService {
       if (isMiseCommandUnavailable(error)) {
         final installCommand = recommendedMiseInstallCommand();
         return [
-          const EnvironmentSignal(
+          EnvironmentSignal(
             title: 'mise CLI',
-            value: '未检测到',
-            detail: '当前桌面应用没有找到可执行的 mise 命令，因此无法读取当前环境信息。',
+            value: tr('Not detected'),
+            detail: tr(
+              'The desktop app could not find an executable mise command, so environment information is unavailable.',
+            ),
             level: HealthLevel.critical,
           ),
-          const EnvironmentSignal(
-            title: '首次安装状态',
-            value: '需初始化',
-            detail: '这更像首次启动引导场景，不应该继续展示模拟的工具链状态。',
+          EnvironmentSignal(
+            title: tr('First install state'),
+            value: tr('Setup required'),
+            detail: tr(
+              'This looks like a first-run setup scenario; mock toolchain state should not be shown.',
+            ),
             level: HealthLevel.warning,
           ),
           EnvironmentSignal(
-            title: '下一步',
-            value: '先安装 mise',
-            detail: '建议先执行 `$installCommand`，然后重新打开应用或点击刷新。',
+            title: tr('Next step'),
+            value: tr('Install mise first'),
+            detail: trArgs(
+              'Run `{command}` first, then reopen the app or click Refresh.',
+              {'command': installCommand},
+            ),
             level: HealthLevel.info,
           ),
-          const EnvironmentSignal(
-            title: '验证命令',
+          EnvironmentSignal(
+            title: tr('Verification command'),
             value: 'mise --version',
-            detail: '安装完成后先确认 CLI 能运行，再继续检查 PATH、shim 和项目配置。',
+            detail: tr(
+              'After installation, confirm the CLI runs before checking PATH, shims, and project configuration.',
+            ),
             level: HealthLevel.info,
           ),
         ];
       }
       return [
-        const EnvironmentSignal(
-          title: '环境信号读取失败',
-          value: '暂不可用',
-          detail: '这次没有成功从 mise CLI 读取环境信息，请稍后重试。',
+        EnvironmentSignal(
+          title: tr('Failed to read environment signals'),
+          value: tr('Unavailable'),
+          detail: tr(
+            'Environment information could not be read from the mise CLI this time. Please try again later.',
+          ),
           level: HealthLevel.warning,
         ),
-        const EnvironmentSignal(
-          title: '建议动作',
-          value: '重新刷新',
-          detail: '可以先点击刷新环境数据；如果仍然失败，再查看错误输出定位问题。',
+        EnvironmentSignal(
+          title: tr('Suggested action'),
+          value: tr('Refresh again'),
+          detail: tr(
+            'Try refreshing environment data first; if it still fails, inspect the error output.',
+          ),
           level: HealthLevel.info,
         ),
       ];
@@ -201,19 +236,21 @@ class LiveMiseCliService implements MiseCliService {
         ToolRecord(
           id: tool,
           name: _toolName(tool),
-          category: '${_toolName(tool)} 版本管理',
+          category: trArgs('{tool} version management', {
+            'tool': _toolName(tool),
+          }),
           description: _toolDescription(tool),
           activeVersion: active.version,
           requestedVersion: active.requestedVersion ?? active.version,
           source: _formatSource(active.source),
           strategy: _strategyDescription(active.source),
-          latestStableVersion: '待同步',
+          latestStableVersion: tr('Pending sync'),
           latestPreviewVersion: active.version,
           installedVersions: versions
               .map(
                 (version) => ToolVersionRecord(
                   version: version.version,
-                  channel: version.active ? '当前生效' : '已安装',
+                  channel: version.active ? tr('Active') : tr('Installed'),
                   note: _installedNote(version),
                   commandPreview: _useCommandForSource(
                     tool,
@@ -289,10 +326,10 @@ class LiveMiseCliService implements MiseCliService {
       shellExecutable: shellExecutable,
     );
     final notices = <InlineNotice>[
-      if (remoteLoad.notice != null) remoteLoad.notice!,
+      ?remoteLoad.notice,
       if (windowsShimPath.isMissing)
         _buildWindowsShimPathNotice(tool.id, windowsShimPath),
-      if (pathConflictNotice != null) pathConflictNotice,
+      ?pathConflictNotice,
     ];
 
     return tool.copyWith(
@@ -302,7 +339,9 @@ class LiveMiseCliService implements MiseCliService {
           .map(
             (version) => ToolVersionRecord(
               version: version.version,
-              channel: version.rolling ? '滚动版本' : '远端版本',
+              channel: version.rolling
+                  ? tr('Rolling version')
+                  : tr('Remote version'),
               note: _remoteNote(version.version, tool.requestedVersion),
               commandPreview: version.version == updateVersion
                   ? _installAndUseCommandForSource(
@@ -387,10 +426,16 @@ class LiveMiseCliService implements MiseCliService {
         versions: fallbackVersions,
         latestStableVersion: fallbackLatestVersion,
         notice: InlineNotice(
-          title: '${_toolName(tool)} 远端目录暂时不可用',
+          title: trArgs('{tool} remote directory temporarily unavailable', {
+            'tool': _toolName(tool),
+          }),
           message: fallbackLatestVersion == null
-              ? '已回退到本地已安装版本视图，当前激活版本和来源信息仍然可靠。可以稍后重试同步远端版本。'
-              : '直接远端列表暂时不可用，已改用 mise outdated 兜底当前版本线的最新稳定版。',
+              ? tr(
+                  'Fell back to the locally installed version view; active version and source information are still reliable. Retry remote sync later.',
+                )
+              : tr(
+                  'The direct remote list is unavailable, so mise outdated is used to find the latest stable version on the current line.',
+                ),
           level: HealthLevel.warning,
           commandPreview: 'mise ls-remote --json $tool\n$error',
         ),
@@ -475,11 +520,14 @@ class LiveMiseCliService implements MiseCliService {
     final shellOwner = _runtimeOwnerLabel(shellPath);
 
     return InlineNotice(
-      title: '${_toolName(tool)} 当前 shell 仍命中其他版本管理器',
+      title: trArgs(
+        '{tool} still resolves to another version manager in the current shell',
+        {'tool': _toolName(tool)},
+      ),
       message:
-          'mise 解析到的是 `$misePath`，但当前 shell 实际执行的是 `$shellPath`。'
-          '${shellOwner == null ? '' : ' 这更像 `$shellOwner` 抢在了 mise 前面。'} '
-          '这不是安装失败，而是 PATH 优先级冲突。',
+          '${trArgs('mise resolves to `{misePath}`, but the current shell executes `{shellPath}`.', {'misePath': misePath, 'shellPath': shellPath})}'
+          '${shellOwner == null ? '' : ' ${trArgs('This looks like `{owner}` taking precedence over mise.', {'owner': shellOwner})}'} '
+          '${tr('This is a PATH priority conflict, not an install failure.')}',
       level: HealthLevel.warning,
       commandPreview:
           'mise current $tool\n'
@@ -494,10 +542,13 @@ class LiveMiseCliService implements MiseCliService {
     WindowsShimPathStatus status,
   ) {
     return InlineNotice(
-      title: '检测到 Windows 终端尚未接入 mise shims',
+      title: tr('Windows terminal is not using mise shims yet'),
       message:
           status.detail ??
-          '${_toolName(tool)} 已由 mise 管理，但新的 cmd / PowerShell 会话里还不能直接调用。执行下面的命令后，重新打开终端即可生效。',
+          trArgs(
+            '{tool} is managed by mise but is not yet available in new cmd / PowerShell sessions. Run the command below, then reopen the terminal.',
+            {'tool': _toolName(tool)},
+          ),
       level: HealthLevel.warning,
       commandPreview: status.commandPreview,
     );
@@ -653,13 +704,17 @@ class LiveMiseCliService implements MiseCliService {
 
     return [
       ToolProjectImpact(
-        projectName: isGlobal ? '全局配置' : _basename(path),
+        projectName: isGlobal ? tr('Global config') : _basename(path),
         path: path,
         requestedVersion: active.requestedVersion ?? active.version,
         resolvedVersion: active.version,
         reason: isGlobal
-            ? '当前版本来自全局配置文件，未被项目级 mise.toml 覆盖。'
-            : '当前版本由该配置文件直接声明并在当前工作目录生效。',
+            ? tr(
+                'This version comes from the global configuration file and is not overridden by a project-level mise.toml.',
+              )
+            : tr(
+                'This version is declared directly by the configuration file and applies in the current working directory.',
+              ),
         level: isGlobal ? HealthLevel.info : HealthLevel.healthy,
       ),
     ];
@@ -674,20 +729,25 @@ class LiveMiseCliService implements MiseCliService {
     return [
       if (updateVersion != null)
         ToolCommandAction(
-          label: '升级到推荐版本',
-          summary: '安装并切换到 $updateVersion。',
+          label: tr('Upgrade to recommended version'),
+          summary: trArgs('Install and switch to {version}.', {
+            'version': updateVersion,
+          }),
           command: _installAndUseCommandForSource(tool, updateVersion, source),
           level: HealthLevel.healthy,
         ),
       ToolCommandAction(
-        label: '查看当前来源',
-        summary: '确认当前生效版本和来源文件。',
+        label: tr('View current source'),
+        summary: tr('Confirm the currently active version and source file.'),
         command: 'mise ls --json\nmise which $tool',
         level: HealthLevel.info,
       ),
       ToolCommandAction(
-        label: '回看当前版本',
-        summary: '查看 $activeVersion 在当前目录的生效状态。',
+        label: tr('Review current version'),
+        summary: trArgs(
+          'Check how {version} applies in the current directory.',
+          {'version': activeVersion},
+        ),
         command: 'mise current $tool',
         level: HealthLevel.info,
       ),
@@ -721,32 +781,38 @@ class LiveMiseCliService implements MiseCliService {
   };
 
   String _toolDescription(String tool) => switch (tool) {
-    'go' => '用于本地后端与 CLI 工具链构建，通常由全局默认版本托底。',
-    'java' => '需要关注版本与发行版组合，尤其适合在界面中直观看来源。',
-    'python' => '常用于脚本、工具链和数据处理，项目覆盖关系很容易产生分歧。',
-    'flutter' => '当前项目的核心工具包，最需要明确显示项目级锁定与实际安装版本。',
-    _ => '通过 mise 管理的本地开发工具版本。',
+    'go' =>
+      'Used for local backend and CLI toolchain builds, usually backed by the global default version.',
+    'java' =>
+      'Version and distribution combinations matter, and sources are especially useful to see in the UI.',
+    'python' =>
+      'Common for scripts, toolchains, and data work, where project overrides often diverge.',
+    'flutter' =>
+      'The core toolkit for this project; project-level pins and actual installed versions matter most.',
+    _ => 'A local development tool version managed by mise.',
   };
 
   String _formatSource(MiseSourceRef? source) {
     if (source == null) {
-      return '未知';
+      return 'Unknown';
     }
 
     return switch (source.type) {
       'mise.toml' =>
-        (source.path?.contains('/.config/mise/') ?? false) ? '全局' : '项目',
+        (source.path?.contains('/.config/mise/') ?? false)
+            ? 'Global'
+            : 'Project',
       _ => source.type,
     };
   }
 
   MiseSourceRef? _resolveSourceRefFromLabel(String source) {
     return switch (source) {
-      '全局' => const MiseSourceRef(
+      'Global' => const MiseSourceRef(
         type: 'mise.toml',
         path: '/.config/mise/config.toml',
       ),
-      '项目' => const MiseSourceRef(
+      'Project' => const MiseSourceRef(
         type: 'mise.toml',
         path: '/workspace/mise.toml',
       ),
@@ -756,28 +822,28 @@ class LiveMiseCliService implements MiseCliService {
 
   String _strategyDescription(MiseSourceRef? source) {
     if (source?.path == null) {
-      return '当前版本来自本地已安装列表，但还没有显式来源信息。';
+      return 'This version comes from the local installed list, but no explicit source is available yet.';
     }
 
     if (source!.path!.contains('/.config/mise/')) {
-      return '当前版本由全局 config.toml 或全局 mise.toml 决定，项目未覆盖时会直接继承。';
+      return 'This version is determined by the global config.toml or global mise.toml and is inherited unless a project overrides it.';
     }
 
-    return '当前版本由项目级 mise.toml 决定，优先级高于全局默认版本。';
+    return 'This version is determined by the project-level mise.toml and takes precedence over the global default.';
   }
 
   String _installedNote(MiseInstalledToolVersionRef version) {
     if (version.active) {
-      return '这是当前工作目录实际生效的版本。';
+      return 'This is the version currently active in the working directory.';
     }
     if (version.source?.path != null) {
-      return '已安装，可在需要时切换；最近一次来源文件来自 ${version.source!.path}.';
+      return 'Installed and ready to switch; the most recent source file is ${version.source!.path}.';
     }
-    return '已安装但当前未激活。';
+    return 'Installed but not currently active.';
   }
 
   String _remoteNote(String version, String requestedVersion) {
-    return '远端可用版本，可根据当前请求版本 $requestedVersion 决定是否安装。';
+    return 'Remote version available; installation depends on the requested version $requestedVersion.';
   }
 
   String _installCommand(String tool, String version) =>

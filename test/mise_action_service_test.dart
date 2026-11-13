@@ -114,7 +114,10 @@ void main() {
     expect(await oldLockfile.exists(), isTrue);
     expect(await newLockfile.exists(), isFalse);
     expect(result.lockfileCleanupReport.removedPaths, [newLockfile.path]);
-    expect(result.lockfileCleanupReport.detail, contains('已自动清理 1 个'));
+    expect(
+      result.lockfileCleanupReport.detail,
+      contains('Automatically cleaned up 1 leftover mise lock file.'),
+    );
   });
 
   test('cleans explicit waiting-for-lock path from command output', () async {

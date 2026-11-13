@@ -3,22 +3,25 @@ import 'package:mise_gui/features/projects/presentation/projects_page.dart';
 
 void main() {
   test('flags system and disk roots as risky scan directories', () {
-    expect(scanDirectoryRiskForPath('/')?.message, contains('系统根目录'));
+    expect(
+      scanDirectoryRiskForPath('/')?.message,
+      contains('system root directory'),
+    );
     expect(
       scanDirectoryRiskForPath('/Volumes/Macintosh HD')?.message,
-      contains('macOS 磁盘卷根目录'),
+      contains('macOS volume root'),
     );
     expect(
       scanDirectoryRiskForPath('/media/alex/Backup')?.message,
-      contains('Linux 挂载磁盘根目录'),
+      contains('Linux mount root'),
     );
     expect(
       scanDirectoryRiskForPath(r'C:\')?.message,
-      contains('Windows 磁盘根目录'),
+      contains('Windows drive root'),
     );
     expect(
       scanDirectoryRiskForPath(r'\\server\share')?.message,
-      contains('网络共享根目录'),
+      contains('network share root'),
     );
   });
 

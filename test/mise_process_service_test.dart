@@ -15,7 +15,7 @@ void main() {
     );
 
     expect(diagnosis, isNotNull);
-    expect(diagnosis!.summary, contains('缺少 make'));
+    expect(diagnosis!.summary, contains('make is missing'));
     expect(diagnosis.detail, contains('xcode-select --install'));
   });
 
@@ -26,7 +26,7 @@ void main() {
     );
 
     expect(diagnosis, isNotNull);
-    expect(diagnosis!.summary, contains('C 编译工具链'));
+    expect(diagnosis!.summary, contains('C build toolchain is missing'));
     expect(diagnosis.detail, contains('clang --version'));
   });
 

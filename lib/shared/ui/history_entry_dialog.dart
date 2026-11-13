@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 Future<void> showHistoryEntryDialog(
@@ -53,13 +54,13 @@ class _HistoryEntryDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _DialogStatusMeta(
-                          label: entry.status.label,
+                          label: tr(entry.status.label),
                           color: statusColor,
                           muted: !entry.isFailure,
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          '操作详情',
+                          tr('Operation details'),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 8),
@@ -96,18 +97,18 @@ class _HistoryEntryDialog extends StatelessWidget {
                       builder: (context, constraints) {
                         final wide = constraints.maxWidth >= 760;
                         final stdout = _LogPanel(
-                          title: '标准输出',
+                          title: 'Standard output',
                           content: entry.stdout?.trim().isNotEmpty == true
                               ? entry.stdout!
-                              : '没有记录到标准输出。',
+                              : tr('No standard output was recorded.'),
                         );
                         final stderr = _LogPanel(
-                          title: entry.isFailure ? '错误输出' : '运行日志',
+                          title: entry.isFailure ? 'Error output' : 'Run log',
                           content: entry.stderr?.trim().isNotEmpty == true
                               ? entry.stderr!
                               : entry.isFailure
-                              ? '没有记录到错误输出。'
-                              : '没有记录到运行日志。',
+                              ? tr('No error output was recorded.')
+                              : tr('No run log was recorded.'),
                           emphasize: entry.isFailure,
                         );
 
@@ -170,7 +171,7 @@ class _DialogStatusMeta extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             color: muted ? colors.textMuted : color,
             fontSize: 13,
@@ -220,19 +221,19 @@ class _CommandBlock extends StatelessWidget {
     final colors = AppTheme.colorsOf(context);
 
     return _SurfaceBlock(
-      title: '实际命令',
+      title: 'Actual command',
       trailing: TextButton.icon(
         onPressed: () async {
           await Clipboard.setData(ClipboardData(text: entry.command));
           if (!context.mounted) {
             return;
           }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('已复制实际 CLI 命令。')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(tr('Actual CLI command copied.'))),
+          );
         },
         icon: const Icon(Icons.content_copy_rounded, size: 16),
-        label: const Text('复制命令'),
+        label: Text(tr('Copy command')),
       ),
       child: Container(
         width: double.infinity,
@@ -342,7 +343,7 @@ class _SurfaceBlock extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
+                  tr(title),
                   style: TextStyle(
                     color: emphasize ? colors.warning : colors.textPrimary,
                     fontFamily: 'FiraCode',
@@ -351,7 +352,7 @@ class _SurfaceBlock extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
+              ?trailing,
             ],
           ),
           const SizedBox(height: 12),

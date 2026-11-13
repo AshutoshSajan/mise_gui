@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 
@@ -59,7 +60,11 @@ class GitHubAppUpdateService implements AppUpdateService {
       return null;
     }
 
-    var releaseNotes = '发现新版本 $tagName，可前往 GitHub 查看更新详情。';
+    final defaultReleaseNotes = trArgs(
+      'Version {tag} is available. See GitHub for release details.',
+      {'tag': tagName},
+    );
+    var releaseNotes = defaultReleaseNotes;
     var releaseUrl = '$_githubReleasesPageUrl/tag/$tagName';
     final commitSha = _resolveTagCommitSha(latestTag);
 
@@ -78,8 +83,7 @@ class GitHubAppUpdateService implements AppUpdateService {
       }
     }
 
-    if (releaseNotes == '发现新版本 $tagName，可前往 GitHub 查看更新详情。' &&
-        commitSha != null) {
+    if (releaseNotes == defaultReleaseNotes && commitSha != null) {
       final commitJson = await _getJsonMap(
         '$_githubApiBase/commits/$commitSha',
         allowNotFound: true,

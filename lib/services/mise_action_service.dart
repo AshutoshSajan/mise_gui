@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 
 class MiseLockfileSnapshot {
@@ -32,17 +33,37 @@ class MiseLockfileCleanupReport {
 
     final parts = <String>[];
     if (removedPaths.isNotEmpty) {
-      parts.add('已自动清理 ${removedPaths.length} 个可能残留的 mise 锁文件。');
-      parts.addAll(removedPaths.map((path) => '已清理: $path'));
+      parts.add(
+        trArgs(
+          '{count, plural, one {Automatically cleaned up # leftover mise lock file.} other {Automatically cleaned up # leftover mise lock files.}}',
+          {'count': removedPaths.length},
+        ),
+      );
+      parts.addAll(
+        removedPaths.map((path) => trArgs('Cleaned: {path}', {'path': path})),
+      );
     }
     if (failedPaths.isNotEmpty) {
-      parts.add('有 ${failedPaths.length} 个锁文件未能自动删除，可以确认没有其他 mise 进程后手动删除。');
+      parts.add(
+        trArgs(
+          '{count, plural, one {# lock file could not be deleted automatically. Confirm no other mise process is running, then delete it manually.} other {# lock files could not be deleted automatically. Confirm no other mise processes are running, then delete them manually.}}',
+          {'count': failedPaths.length},
+        ),
+      );
       parts.addAll(
-        failedPaths.map((path) => '需手动处理: rm -f ${_shellEscape(path)}'),
+        failedPaths.map(
+          (path) => trArgs('Manual action required: rm -f {path}', {
+            'path': _shellEscape(path),
+          }),
+        ),
       );
     }
     if (detectedPaths.isNotEmpty) {
-      parts.addAll(detectedPaths.map((path) => '检测到锁路径: $path'));
+      parts.addAll(
+        detectedPaths.map(
+          (path) => trArgs('Detected lock path: {path}', {'path': path}),
+        ),
+      );
     }
     return parts.join('\n');
   }

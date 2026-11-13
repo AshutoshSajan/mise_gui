@@ -1,116 +1,155 @@
 <p align="center">
-  <img src="docs/brand-mark.png" alt="Mise GUI Logo" width="120" height="120">
+  <img src="docs/brand-mark.png" alt="Mise GUI logo" width="104" height="104">
 </p>
 
+<h1 align="center">Mise GUI</h1>
 
 <p align="center">
-  简体中文 · <a href="README.en.md">English</a>
+  <strong>A desktop control room for your local mise environment.</strong><br>
+  See what is installed, what projects override, and what changed — without reading raw CLI output.
 </p>
 
 <p align="center">
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/downloads/likaia/mise_gui/total.svg?style=flat" alt="downloads"></a>
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/release/likaia/mise_gui.svg?style=flat" alt="latest version"></a>
-  <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/likaia/mise_gui.svg?style=flat" alt="license"></a>
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg?style=flat" alt="platform"></a>
+  <a href="README.zh.md">简体中文</a> · English
 </p>
 
-# Mise GUI
+<p align="center">
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/downloads/likaia/mise_gui/total.svg?style=flat" alt="Downloads"></a>
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/release/likaia/mise_gui.svg?style=flat" alt="Latest release"></a>
+  <a href="https://github.com/likaia/mise_gui/actions/workflows/ci.yml"><img src="https://github.com/likaia/mise_gui/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/likaia/mise_gui.svg?style=flat" alt="License"></a>
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg?style=flat" alt="Platforms"></a>
+</p>
 
-一个面向开发者的 mise 可视化管理软件，通过图形化界面快速管理本地工具链版本以及项目内所依赖工具版本。
+![Mise GUI environment console in dark mode](docs/dashboard-dark.png)
 
-![demo-img-1.png](docs/1.png)
+## Why Mise GUI
 
-## 项目简介
+Mise makes it easy to pin tools per project. The hard part is seeing the whole
+picture: which versions are active, which projects override the defaults, and
+whether the last upgrade actually succeeded.
 
-Mise GUI 是一个基于 Flutter 的跨平台桌面应用，为 [mise](https://mise.jdx.dev/) 提供更直观的本地环境管理体验。它会读取真实的 mise CLI 状态，把系统信息、已安装工具、项目级版本覆盖、全局配置和最近操作集中到一起进行快速便捷的管理。
+Mise GUI reads real mise state and puts that picture on one screen. It is built
+for developers who move between languages and repositories all day and want to
+answer three questions immediately:
 
-本项目适合经常在多语言、多项目之间切换的开发者：你不需要反复执行 `mise current`、`mise ls`、`mise outdated` 或打开多个 `mise.toml` 文件，就能快速判断当前有哪些项目覆盖了全局版本。
+- What is installed and active right now?
+- Which projects override my global toolchain?
+- What happened the last time I ran an operation?
 
+The interface ships in English by default and includes a built-in Simplified
+Chinese switch.
 
+## What you can do
 
-## 界面预览
+| Surface | What it gives you |
+| --- | --- |
+| **Environment console** | Host details, installed tool count, project overrides, and the mise version in one readable ledger. |
+| **Tools** | Current and latest versions per tool, remote version loading, version switching, upgrades, and uninstalls. |
+| **Projects** | Multi-directory scanning that highlights projects overriding global defaults. |
+| **Config** | Global and project TOML in one context, with a diff preview before saving. |
 
+Operations are explicit. Installs and upgrades move through a command preview
+before execution, and every result is recorded with status, duration, and exit
+code in Recent activity.
 
+## Light and dark
 
-### 工具版本
+The console is designed for long sessions in either appearance. Both themes use
+the same hairline structure, status dots, and typographic hierarchy.
 
-按工具查看当前版本和最新版本，进入详情后可以加载远端版本、切换版本、升级或卸载。
+<p align="center">
+  <img src="docs/dashboard-light.png" width="49%" alt="Mise GUI dashboard in light mode">
+  <img src="docs/dashboard-dark.png" width="49%" alt="Mise GUI dashboard in dark mode">
+</p>
 
-![demo-img-2.png](docs/2.png)
+## Install
 
-### 安装新工具
+1. Install [mise](https://mise.jdx.dev/) if it is not already available:
 
-安装流程会先读取远端可选版本，确认后进入命令预览，不会直接执行不可见操作。
+   ```bash
+   # macOS
+   brew install mise
 
-![demo-img-3.png](docs/3.png)
+   # Windows
+   winget install jdx.mise
 
-### 项目覆盖
+   # Linux
+   curl https://mise.run | sh
+   ```
 
-你可以添加多个扫描目录，应用会递归检查项目配置，并把覆盖全局默认版本的项目单独展示出来。
+2. Download the latest Mise GUI build for your platform from
+   [Releases](https://github.com/likaia/mise_gui/releases).
 
-![demo-img-4.png](docs/4.png)
+If mise is missing, the app opens an onboarding screen with the recommended
+install command instead of failing silently.
 
-### 配置管理
+## Local development
 
-配置页把全局配置和项目配置放在同一个上下文里，编辑 TOML 前后可以查看差异，减少误改风险。
-
-![demo-img-5.png](docs/5.png)
-
-## 开始使用
-
-前往[releases](https://github.com/likaia/mise_gui/releases)页下载符合你操作系统的最新版本，软件成功安装后，如果当前机器没有安装 mise，应用会进入引导页并给出推荐安装命令：
-
-```bash
-# macOS
-brew install mise
-
-# Windows
-winget install jdx.mise
-
-# Linux
-curl https://mise.run | sh
-```
-
-
-
-## 本地开发
+The repository pins Flutter through `mise.toml`, so the first command installs
+the expected SDK:
 
 ```bash
 git clone https://github.com/likaia/mise_gui.git
 cd mise_gui
 
+mise install
 flutter pub get
-flutter run -d macos
+flutter run -d linux
 ```
 
-其他桌面平台可以替换运行目标：
+Use the matching desktop target on other platforms:
 
 ```bash
-flutter run -d linux
+flutter run -d macos
 flutter run -d windows
 ```
 
+### Verification
 
+Run the same checks before opening a pull request:
 
-## 项目结构
+```bash
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test
+npm run deps:check
+```
+
+`npm run deps:check` verifies that every direct and transitive dependency is on
+a supported stable release. See [AGENTS.md](AGENTS.md) for the dependency and
+release rules used by this repository.
+
+## Project structure
 
 ```text
 lib/
-  app/                  # 应用启动、路由、主题和外壳
+  app/                  # Bootstrap, routing, theme, and application shell
   features/
-    dashboard/          # 环境总览
-    tools/              # 工具版本、安装、升级、卸载
-    projects/           # 扫描目录和项目覆盖
-    config/             # 全局与项目配置管理
-  repositories/         # 页面数据聚合
-  services/             # mise CLI、配置、历史、更新等底层服务
-  shared/ui/            # 通用面板、状态、对话框和预览组件
-scripts/                # macOS 打包脚本
-docs/                   # README 截图素材
+    dashboard/          # Environment console and recent activity
+    tools/              # Versions, install, upgrade, and uninstall flows
+    projects/           # Scan directories and project coverage
+    config/             # Global and project configuration management
+  l10n/                 # English source strings and Chinese translations
+  repositories/         # Page-level data aggregation
+  services/             # mise CLI, config, history, update, and platform services
+  shared/ui/            # Panels, states, dialogs, and preview components
+assets/
+  branding/             # Application marks
+  fonts/                # Bundled IBM Plex Sans and JetBrains Mono faces
+scripts/                # Packaging, dependency, and hook scripts
+docs/                   # README screenshots and brand assets
 ```
 
+## Built with
 
+Flutter · Riverpod 3 · go_router · package_info_plus · file_selector
+
+The interface uses bundled [IBM Plex Sans](https://github.com/IBM/plex) and
+[JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) faces under the SIL
+Open Font License. License texts live in `assets/fonts/`.
 
 ## License
 
-本项目使用MIT作为开源协议，详情请移步： [LICENSE.txt](LICENSE.txt)。
+This project is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt)
+for details.

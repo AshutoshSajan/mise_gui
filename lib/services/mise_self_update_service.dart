@@ -597,7 +597,7 @@ class MiseUpgradeCommand {
     : executable = 'mise',
       arguments = const ['self-update', '--yes'],
       displayCommand = 'mise self-update --yes',
-      installSourceLabel = '直接安装',
+      installSourceLabel = 'Direct install',
       usesPackageManager = false,
       useMiseProcessService = true;
 

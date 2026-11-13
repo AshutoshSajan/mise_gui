@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/router/app_router.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 class MiseGuiApp extends ConsumerStatefulWidget {
@@ -44,6 +46,8 @@ class _MiseGuiAppState extends ConsumerState<MiseGuiApp>
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(appLocaleProvider);
+    AppLocalizations.sync(locale);
 
     return MaterialApp.router(
       title: 'mise_gui',
@@ -51,6 +55,14 @@ class _MiseGuiAppState extends ConsumerState<MiseGuiApp>
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('zh')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
       builder: (context, child) =>
           _AppUpdateGate(child: child ?? const SizedBox.shrink()),
@@ -132,6 +144,7 @@ class _AppUpdateDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLanguageProvider);
     final theme = Theme.of(context);
     final colors = AppTheme.colorsOf(context);
     final noteLines = _releaseNoteLines(updateInfo.releaseNotes);
@@ -213,12 +226,18 @@ class _AppUpdateDialog extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '发现新版本',
+                              tr('Update available'),
                               style: theme.textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '当前版本 ${updateInfo.currentVersion}，建议升级到 ${updateInfo.latestVersion}。',
+                              trArgs(
+                                'You are on {current}. Version {latest} is available.',
+                                {
+                                  'current': updateInfo.currentVersion,
+                                  'latest': updateInfo.latestVersion,
+                                },
+                              ),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: colors.textMuted,
                                 height: 1.55,
@@ -247,7 +266,10 @@ class _AppUpdateDialog extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Text('更新内容', style: theme.textTheme.titleLarge),
+                            Text(
+                              tr('What\'s new'),
+                              style: theme.textTheme.titleLarge,
+                            ),
                             const Spacer(),
                             Text(
                               'GitHub Release',
@@ -283,7 +305,7 @@ class _AppUpdateDialog extends ConsumerWidget {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('稍后再说'),
+                        child: Text(tr('Later')),
                       ),
                       const SizedBox(width: 12),
                       FilledButton.icon(
@@ -302,15 +324,19 @@ class _AppUpdateDialog extends ConsumerWidget {
                               return;
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('打开浏览器失败，更新链接已复制到剪贴板。'),
+                              SnackBar(
+                                content: Text(
+                                  tr(
+                                    'Could not open the browser. The update link was copied to the clipboard.',
+                                  ),
+                                ),
                               ),
                             );
                           }
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                        label: const Text('前往GitHub下载'),
+                        label: Text(tr('Download from GitHub')),
                       ),
                     ],
                   ),
@@ -372,7 +398,7 @@ class _VersionTransitionPanel extends StatelessWidget {
         children: [
           Expanded(
             child: _VersionValueCard(
-              label: '当前版本',
+              label: tr('Current version'),
               value: updateInfo.currentVersion,
               accent: colors.info,
             ),
@@ -396,7 +422,7 @@ class _VersionTransitionPanel extends StatelessWidget {
           ),
           Expanded(
             child: _VersionValueCard(
-              label: '最新版本',
+              label: tr('Latest version'),
               value: updateInfo.latestVersion,
               accent: colors.accent,
             ),
@@ -489,7 +515,11 @@ class _ReleaseNoteRow extends StatelessWidget {
 List<String> _releaseNoteLines(String raw) {
   final normalized = raw.replaceAll('\r\n', '\n').trim();
   if (normalized.isEmpty) {
-    return const <String>['本次更新包含若干优化与修复，可前往 GitHub 查看完整说明。'];
+    return <String>[
+      tr(
+        'This release includes various improvements and fixes. See GitHub for the full notes.',
+      ),
+    ];
   }
 
   final lines = normalized
@@ -500,6 +530,10 @@ List<String> _releaseNoteLines(String raw) {
       .toList(growable: false);
 
   return lines.isEmpty
-      ? const <String>['本次更新包含若干优化与修复，可前往 GitHub 查看完整说明。']
+      ? <String>[
+          tr(
+            'This release includes various improvements and fixes. See GitHub for the full notes.',
+          ),
+        ]
       : lines;
 }

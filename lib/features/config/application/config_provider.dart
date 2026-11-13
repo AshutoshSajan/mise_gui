@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/features/projects/application/projects_provider.dart';
 import 'package:mise_gui/models/app_models.dart';
@@ -38,6 +39,7 @@ final selectedConfigProjectProvider = Provider<ProjectRecord?>((ref) {
 });
 
 final configProvider = FutureProvider<ConfigWorkspaceData>((ref) {
+  ref.watch(appLocaleProvider);
   final project = ref.watch(selectedConfigProjectProvider);
   final hasTrackedProject = project != null;
   return ref

@@ -8,6 +8,7 @@ import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/config/application/config_provider.dart';
 import 'package:mise_gui/features/projects/application/projects_provider.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/shared/ui/app_page_scaffold.dart';
 import 'package:mise_gui/shared/ui/app_panel.dart';
@@ -166,14 +167,14 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
 
   Future<void> _handleRefresh() async {
     if (_refreshing) {
-      _showFeedback('正在刷新配置，请稍候。');
+      _showFeedback(tr('Configuration is refreshing. Please wait.'));
       return;
     }
 
     final now = DateTime.now();
     if (_lastRefreshAt != null &&
         now.difference(_lastRefreshAt!) < _refreshDebounce) {
-      _showFeedback('点击过于频繁，请 1 秒后再试。');
+      _showFeedback(tr('Too many clicks. Try again in a second.'));
       return;
     }
 
@@ -183,9 +184,9 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
     try {
       final refreshed = ref.refresh(configProvider.future);
       await refreshed;
-      _showFeedback('配置数据已刷新。');
+      _showFeedback(tr('Configuration refreshed.'));
     } catch (_) {
-      _showFeedback('刷新失败，请稍后重试。');
+      _showFeedback(tr('Refresh failed. Please try again later.'));
     } finally {
       if (mounted) {
         setState(() => _refreshing = false);
@@ -204,6 +205,7 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final configValue = ref.watch(configProvider);
     final projectOptions = ref
         .watch(projectsProvider)
@@ -225,8 +227,10 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
         }
 
         return AppPageScaffold(
-          title: '配置管理',
-          description: '管理全局和项目配置，保存前先查看差异。',
+          title: tr('Configuration management'),
+          description: tr(
+            'Manage global and project configuration, with a diff preview before saving.',
+          ),
           child: Column(
             children: [
               _ConfigAutoRefresh(
@@ -279,7 +283,7 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
                   child: _ConfigSection(
                     section: section,
                     onEditProxy:
-                        section.title == '运行时设置' &&
+                        section.title == 'Runtime settings' &&
                             workspace.proxySettings != null
                         ? () => _openProxySettingsEditor(
                             context: context,
@@ -288,7 +292,8 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
                           )
                         : null,
                     onEditJavaAliases:
-                        section.title == 'Java 别名' && globalDocument != null
+                        section.title == 'Java aliases' &&
+                            globalDocument != null
                         ? () => _openJavaAliasesEditor(
                             context: context,
                             ref: ref,
@@ -321,7 +326,14 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
       messenger.showSnackBar(
-        SnackBar(content: Text('${document.title} 已写回 ${document.fileName}')),
+        SnackBar(
+          content: Text(
+            trArgs('{title} saved to {fileName}', {
+              'title': tr(document.title),
+              'fileName': document.fileName,
+            }),
+          ),
+        ),
       );
     }
   }
@@ -341,7 +353,9 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
       ref.invalidate(configProvider);
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('运行时设置已写回全局配置。')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(tr('Runtime settings saved to global config.'))),
+      );
     }
   }
 
@@ -360,7 +374,9 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
       ref.invalidate(configProvider);
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('代理设置已写回全局配置。')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(tr('Proxy settings saved to global config.'))),
+      );
     }
   }
 
@@ -379,7 +395,9 @@ class _ConfigPageState extends ConsumerState<ConfigPage> {
       ref.invalidate(configProvider);
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('Java 别名已写回全局配置。')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(tr('Java aliases saved to global config.'))),
+      );
     }
   }
 }
@@ -470,7 +488,7 @@ class _DocumentStrip extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '配置文件',
+                  tr('Configuration files'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
@@ -483,13 +501,15 @@ class _DocumentStrip extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh_rounded, size: 18),
-                label: Text(refreshing ? '刷新中...' : '刷新'),
+                label: Text(refreshing ? tr('Refreshing...') : tr('Refresh')),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            '先确认当前有哪些配置文件，再选择要查看的项目配置。',
+            tr(
+              'Review the available configuration files, then choose a project configuration to inspect.',
+            ),
             style: TextStyle(color: colors.textMuted, height: 1.45),
           ),
           if (globalDocument != null) ...[
@@ -561,14 +581,16 @@ class _GlobalDocumentBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '全局默认配置',
+                tr('Global configuration'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                '这里定义项目默认继承的基线版本和基础设置。',
+                tr(
+                  'Defines the baseline versions and basic settings inherited by projects.',
+                ),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
               const SizedBox(height: 12),
@@ -583,7 +605,9 @@ class _GlobalDocumentBar extends StatelessWidget {
             icon: Icon(
               document.exists ? Icons.edit_note_rounded : Icons.add_rounded,
             ),
-            label: Text(document.exists ? '编辑全局' : '创建全局'),
+            label: Text(
+              document.exists ? tr('Edit global') : tr('Create global'),
+            ),
           ),
         ),
       ],
@@ -611,7 +635,7 @@ class _ProjectSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '当前配置项目',
+          tr('Current config project'),
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -622,8 +646,8 @@ class _ProjectSelector extends StatelessWidget {
           child: DropdownButtonFormField<String>(
             initialValue: dropdownValue,
             isExpanded: true,
-            decoration: const InputDecoration(
-              hintText: '选择要查看的项目配置',
+            decoration: InputDecoration(
+              hintText: tr('Select a project configuration'),
               isDense: true,
             ),
             items: [
@@ -666,13 +690,13 @@ class _DocumentCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!document.exists) ...[
-          const StatusBadge(label: '待创建', level: HealthLevel.info),
+          StatusBadge(label: tr('Not created yet'), level: HealthLevel.info),
           const SizedBox(height: 12),
         ],
-        Text(document.title, style: Theme.of(context).textTheme.titleLarge),
+        Text(tr(document.title), style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 6),
         Text(
-          document.description,
+          tr(document.description),
           style: TextStyle(color: colors.textMuted, height: 1.5),
         ),
         const SizedBox(height: 12),
@@ -687,8 +711,10 @@ class _DocumentCard extends StatelessWidget {
             ),
             label: Text(
               document.id == 'global'
-                  ? (document.exists ? '编辑全局' : '创建全局')
-                  : (document.exists ? '编辑项目配置' : '创建项目配置'),
+                  ? (document.exists ? tr('Edit global') : tr('Create global'))
+                  : (document.exists
+                        ? tr('Edit project config')
+                        : tr('Create project config')),
             ),
           ),
         ),
@@ -748,12 +774,15 @@ class _RuntimeSettingsPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '运行时设置',
+                      tr('Runtime settings'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '常用 mise settings 写入 ${data.document.fileName}。',
+                      trArgs(
+                        'Common mise settings are written to {fileName}.',
+                        {'fileName': data.document.fileName},
+                      ),
                       style: TextStyle(color: colors.textMuted, height: 1.45),
                     ),
                   ],
@@ -763,7 +792,7 @@ class _RuntimeSettingsPanel extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.tune_rounded),
-                label: const Text('调整设置'),
+                label: Text(tr('Adjust settings')),
               ),
             ],
           ),
@@ -801,7 +830,9 @@ class _RuntimeSettingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
-    final value = setting.isSet ? setting.value : '默认 ${setting.defaultValue}';
+    final value = setting.isSet
+        ? setting.value
+        : trArgs('Default {value}', {'value': setting.defaultValue});
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -814,7 +845,7 @@ class _RuntimeSettingTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            setting.label,
+            tr(setting.label),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
@@ -829,7 +860,7 @@ class _RuntimeSettingTile extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            setting.detail,
+            tr(setting.detail),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -865,10 +896,16 @@ class _ProxySettingsPanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('网络代理', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      tr('Network proxy'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 6),
                     Text(
-                      '写入 ${data.document.fileName} 的 [env]，GUI 发起的 mise 命令也会读取这些代理变量。',
+                      trArgs(
+                        'Written to [env] in {fileName}. mise commands launched from the app also read these proxy variables.',
+                        {'fileName': data.document.fileName},
+                      ),
                       style: TextStyle(color: colors.textMuted, height: 1.45),
                     ),
                   ],
@@ -878,7 +915,9 @@ class _ProxySettingsPanel extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.public_rounded),
-                label: Text(data.hasProxy ? '调整代理' : '设置代理'),
+                label: Text(
+                  data.hasProxy ? tr('Adjust proxy') : tr('Set proxy'),
+                ),
               ),
             ],
           ),
@@ -916,7 +955,7 @@ class _ProxySettingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
-    final value = setting.isSet ? setting.value : '未设置';
+    final value = setting.isSet ? setting.value : tr('Not set');
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -929,7 +968,7 @@ class _ProxySettingTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            setting.label,
+            tr(setting.label),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
@@ -986,12 +1025,12 @@ class _ConfigSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      section.title,
+                      tr(section.title),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      section.description,
+                      tr(section.description),
                       style: TextStyle(color: colors.textMuted, height: 1.55),
                     ),
                   ],
@@ -1002,7 +1041,7 @@ class _ConfigSection extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onEditJavaAliases,
                   icon: const Icon(Icons.edit_note_rounded),
-                  label: const Text('配置别名'),
+                  label: Text(tr('Configure aliases')),
                 ),
               ],
             ],
@@ -1033,7 +1072,8 @@ class _ConfigItemGroup extends StatelessWidget {
         for (var index = 0; index < section.items.length; index++) ...[
           _ConfigItemRow(
             item: section.items[index],
-            onEditProxy: section.items[index].label == '代理环境变量'
+            onEditProxy:
+                section.items[index].label == 'Proxy environment variables'
                 ? onEditProxy
                 : null,
           ),
@@ -1068,7 +1108,7 @@ class _ConfigItemRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.label,
+                tr(item.label),
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -1086,7 +1126,7 @@ class _ConfigItemRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                item.value,
+                tr(item.value),
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   color: _statusColor(context, item.level),
@@ -1099,7 +1139,11 @@ class _ConfigItemRow extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onEditProxy,
                   icon: const Icon(Icons.public_rounded, size: 18),
-                  label: Text(item.value == '未配置' ? '设置代理' : '调整代理'),
+                  label: Text(
+                    item.value == 'Not configured'
+                        ? tr('Set proxy')
+                        : tr('Adjust proxy'),
+                  ),
                 ),
               ],
             ],
@@ -1127,13 +1171,13 @@ class _ConfigItemDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (item.label == '已声明工具' && item.detail.contains(' = ')) {
+    if (item.label == 'Declared tools' && item.detail.contains(' = ')) {
       return _ToolDeclarationsPreview(content: item.detail);
     }
 
     final colors = AppTheme.colorsOf(context);
     return Text(
-      item.detail,
+      tr(item.detail),
       style: TextStyle(color: colors.textMuted, height: 1.5),
     );
   }
@@ -1151,7 +1195,7 @@ class _ToolDeclarationsPreview extends StatelessWidget {
 
     if (entries.isEmpty) {
       return Text(
-        content,
+        tr(content),
         style: TextStyle(color: colors.textMuted, height: 1.5),
       );
     }
@@ -1195,7 +1239,10 @@ class _ToolDeclarationCard extends StatelessWidget {
     final accent = _toolAccentColor(context, entry.tool);
 
     return Semantics(
-      label: '${entry.tool} 已声明版本 ${entry.value}',
+      label: trArgs('{tool} declared version {value}', {
+        'tool': entry.tool,
+        'value': entry.value,
+      }),
       child: Container(
         constraints: const BoxConstraints(minHeight: 104),
         padding: const EdgeInsets.all(14),
@@ -1245,7 +1292,7 @@ class _ToolDeclarationCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    complex ? '自定义' : '版本',
+                    complex ? tr('Custom') : tr('Version'),
                     style: TextStyle(
                       color: complex ? colors.info : colors.accent,
                       fontSize: 11,
@@ -1258,7 +1305,7 @@ class _ToolDeclarationCard extends StatelessWidget {
             const SizedBox(height: 12),
             if (complex) ...[
               Text(
-                '自定义下载源配置',
+                tr('Custom download source'),
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -1355,12 +1402,12 @@ class _ConfigRawPanel extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(top: 12),
-        title: const Text(
-          '原始配置',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          tr('Raw config'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
-          '展开查看这一组对应的 TOML 内容',
+          tr('Expand to view the TOML for this section'),
           style: TextStyle(color: colors.textMuted, fontSize: 12),
         ),
         children: [_CodePanel(title: 'TOML', content: content, height: 320)],
@@ -1439,7 +1486,9 @@ class _ProxySettingsEditorDialogState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _preview == null ? '设置网络代理' : '确认保存网络代理',
+              _preview == null
+                  ? tr('Set network proxy')
+                  : tr('Confirm proxy settings'),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
@@ -1456,7 +1505,7 @@ class _ProxySettingsEditorDialogState
               child: _preview == null
                   ? _buildForm(colors)
                   : _CodePanel(
-                      title: '差异预览',
+                      title: tr('Diff preview'),
                       content: _preview!.diffPreview,
                       expand: true,
                     ),
@@ -1477,25 +1526,29 @@ class _ProxySettingsEditorDialogState
                             });
                           },
                     icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('返回编辑'),
+                    label: Text(tr('Back to editing')),
                   ),
                 OutlinedButton(
                   onPressed: _loadingPreview || _saving
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
+                  child: Text(tr('Cancel')),
                 ),
                 if (_preview == null)
                   FilledButton(
                     onPressed: _loadingPreview || !_hasChanges
                         ? null
                         : _generatePreview,
-                    child: Text(_loadingPreview ? '预览中...' : '预览变更'),
+                    child: Text(
+                      _loadingPreview
+                          ? tr('Previewing...')
+                          : tr('Preview changes'),
+                    ),
                   ),
                 if (_preview != null)
                   FilledButton(
                     onPressed: _saving ? null : _saveSettings,
-                    child: Text(_saving ? '保存中...' : '保存代理'),
+                    child: Text(_saving ? tr('Saving...') : tr('Save proxy')),
                   ),
               ],
             ),
@@ -1540,7 +1593,7 @@ class _ProxySettingsEditorDialogState
         return;
       }
       if (!preview.hasChanges) {
-        _showFeedback('没有变更，无需预览。');
+        _showFeedback(tr('No changes to preview.'));
         return;
       }
       setState(() {
@@ -1580,7 +1633,7 @@ class _ProxySettingsEditorDialogState
             HistoryEntry(
               command: preview.commandPreview,
               timestamp: _formatNow(),
-              detail: '已通过界面调整 mise 代理设置。',
+              detail: tr('Adjusted mise proxy settings from the app.'),
               level: HealthLevel.info,
               status: HistoryStatus.success,
               exitCode: 0,
@@ -1679,12 +1732,12 @@ class _ProxySettingField extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                setting.label,
+                tr(setting.label),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                setting.detail,
+                tr(setting.detail),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
               const SizedBox(height: 4),
@@ -1712,10 +1765,12 @@ class _ProxySettingField extends StatelessWidget {
                 return null;
               }
               if (trimmed.contains(RegExp(r'\s'))) {
-                return '不能包含空白字符';
+                return tr('Must not contain whitespace');
               }
               if (setting.requiresUri && !_proxyUriPattern.hasMatch(trimmed)) {
-                return '需要包含协议，例如 ${setting.placeholder}';
+                return trArgs('Must include a protocol, e.g. {example}', {
+                  'example': setting.placeholder,
+                });
               }
               return null;
             },
@@ -1795,7 +1850,9 @@ class _RuntimeSettingsEditorDialogState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _preview == null ? '调整运行时设置' : '确认保存运行时设置',
+              _preview == null
+                  ? tr('Adjust runtime settings')
+                  : tr('Confirm runtime settings'),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
@@ -1812,7 +1869,7 @@ class _RuntimeSettingsEditorDialogState
               child: _preview == null
                   ? _buildForm(colors)
                   : _CodePanel(
-                      title: '差异预览',
+                      title: tr('Diff preview'),
                       content: _preview!.diffPreview,
                       expand: true,
                     ),
@@ -1833,25 +1890,31 @@ class _RuntimeSettingsEditorDialogState
                             });
                           },
                     icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('返回编辑'),
+                    label: Text(tr('Back to editing')),
                   ),
                 OutlinedButton(
                   onPressed: _loadingPreview || _saving
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
+                  child: Text(tr('Cancel')),
                 ),
                 if (_preview == null)
                   FilledButton(
                     onPressed: _loadingPreview || !_hasChanges
                         ? null
                         : _generatePreview,
-                    child: Text(_loadingPreview ? '预览中...' : '预览变更'),
+                    child: Text(
+                      _loadingPreview
+                          ? tr('Previewing...')
+                          : tr('Preview changes'),
+                    ),
                   ),
                 if (_preview != null)
                   FilledButton(
                     onPressed: _saving ? null : _saveSettings,
-                    child: Text(_saving ? '保存中...' : '保存设置'),
+                    child: Text(
+                      _saving ? tr('Saving...') : tr('Save settings'),
+                    ),
                   ),
               ],
             ),
@@ -1904,7 +1967,7 @@ class _RuntimeSettingsEditorDialogState
         return;
       }
       if (!preview.hasChanges) {
-        _showFeedback('没有变更，无需预览。');
+        _showFeedback(tr('No changes to preview.'));
         return;
       }
       setState(() {
@@ -1944,7 +2007,7 @@ class _RuntimeSettingsEditorDialogState
             HistoryEntry(
               command: preview.commandPreview,
               timestamp: _formatNow(),
-              detail: '已通过界面调整 mise 运行时设置。',
+              detail: tr('Adjusted mise runtime settings from the app.'),
               level: HealthLevel.info,
               status: HistoryStatus.success,
               exitCode: 0,
@@ -1984,17 +2047,29 @@ class _RuntimeSettingsEditorDialogState
       }
       if (setting.type == ConfigRuntimeSettingType.integer &&
           int.tryParse(value) == null) {
-        _showFeedback('${setting.label} 需要填写整数。');
+        _showFeedback(
+          trArgs('{setting} must be an integer.', {
+            'setting': tr(setting.label),
+          }),
+        );
         return null;
       }
       if (setting.type == ConfigRuntimeSettingType.integer &&
           int.parse(value) < 0) {
-        _showFeedback('${setting.label} 不能小于 0。');
+        _showFeedback(
+          trArgs('{setting} must not be less than 0.', {
+            'setting': tr(setting.label),
+          }),
+        );
         return null;
       }
       if (setting.type == ConfigRuntimeSettingType.string &&
           value.contains(RegExp(r'\s'))) {
-        _showFeedback('${setting.label} 不能包含空白字符。');
+        _showFeedback(
+          trArgs('{setting} must not contain whitespace.', {
+            'setting': tr(setting.label),
+          }),
+        );
         return null;
       }
       values[setting.key] = value;
@@ -2086,17 +2161,17 @@ class _RuntimeSettingField extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                setting.label,
+                tr(setting.label),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                setting.detail,
+                tr(setting.detail),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
               const SizedBox(height: 4),
               Text(
-                '默认 ${setting.defaultValue}',
+                trArgs('Default {value}', {'value': setting.defaultValue}),
                 style: TextStyle(color: colors.textMuted, fontSize: 12),
               ),
             ],
@@ -2114,10 +2189,10 @@ class _RuntimeSettingField extends StatelessWidget {
         initialValue: draft.booleanValue,
         isExpanded: true,
         decoration: InputDecoration(labelText: setting.key, isDense: true),
-        items: const [
-          DropdownMenuItem<String>(value: '', child: Text('未设置')),
-          DropdownMenuItem<String>(value: 'true', child: Text('true')),
-          DropdownMenuItem<String>(value: 'false', child: Text('false')),
+        items: [
+          DropdownMenuItem<String>(value: '', child: Text(tr('Not set'))),
+          const DropdownMenuItem<String>(value: 'true', child: Text('true')),
+          const DropdownMenuItem<String>(value: 'false', child: Text('false')),
         ],
         onChanged: onBooleanChanged,
       );
@@ -2205,14 +2280,20 @@ class _ConfigDocumentEditorDialogState
                     children: [
                       Text(
                         _preview == null
-                            ? '编辑 ${widget.document.title}'
-                            : '确认保存 ${widget.document.title}',
+                            ? trArgs('Edit {title}', {
+                                'title': tr(widget.document.title),
+                              })
+                            : trArgs('Confirm save {title}', {
+                                'title': tr(widget.document.title),
+                              }),
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       if (_preview == null) ...[
                         const SizedBox(height: 10),
                         Text(
-                          '正在编辑 ${widget.document.path}',
+                          trArgs('Editing {path}', {
+                            'path': widget.document.path,
+                          }),
                           style: TextStyle(
                             color: colors.textMuted,
                             height: 1.5,
@@ -2264,24 +2345,28 @@ class _ConfigDocumentEditorDialogState
                             });
                           },
                     icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('返回编辑'),
+                    label: Text(tr('Back to editing')),
                   ),
                 OutlinedButton(
                   onPressed: _loadingPreview || _saving
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
+                  child: Text(tr('Cancel')),
                 ),
                 if (_preview == null)
                   if (hasPendingChanges)
                     FilledButton(
                       onPressed: _loadingPreview ? null : _generatePreview,
-                      child: Text(_loadingPreview ? '预览中...' : '预览变更'),
+                      child: Text(
+                        _loadingPreview
+                            ? tr('Previewing...')
+                            : tr('Preview changes'),
+                      ),
                     ),
                 if (_preview != null)
                   FilledButton(
                     onPressed: _saving ? null : _saveDocument,
-                    child: Text(_saving ? '保存中...' : '保存更改'),
+                    child: Text(_saving ? tr('Saving...') : tr('Save changes')),
                   ),
               ],
             ),
@@ -2310,10 +2395,10 @@ class _ConfigDocumentEditorDialogState
           fontSize: 13,
           height: 1.6,
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.all(18),
-          hintText: '# 在这里编辑 TOML',
+          contentPadding: const EdgeInsets.all(18),
+          hintText: tr('# Edit TOML here'),
         ),
       ),
     );
@@ -2325,7 +2410,7 @@ class _ConfigDocumentEditorDialogState
       children: [
         Expanded(
           child: _CodePanel(
-            title: '差异预览',
+            title: tr('Diff preview'),
             content: preview.diffPreview,
             expand: true,
           ),
@@ -2350,7 +2435,7 @@ class _ConfigDocumentEditorDialogState
         return;
       }
       if (!preview.hasChanges) {
-        _showFeedback('没有变更，无需预览。');
+        _showFeedback(tr('No changes to preview.'));
         return;
       }
       setState(() {
@@ -2394,8 +2479,12 @@ class _ConfigDocumentEditorDialogState
               command: preview.commandPreview,
               timestamp: _formatNow(),
               detail: preview.createsFile
-                  ? '已通过界面创建并写入 ${widget.document.fileName}。'
-                  : '已通过界面直接编辑并写回 ${widget.document.fileName}。',
+                  ? trArgs('Created and wrote {fileName} from the app.', {
+                      'fileName': widget.document.fileName,
+                    })
+                  : trArgs('Edited and wrote {fileName} from the app.', {
+                      'fileName': widget.document.fileName,
+                    }),
               level: preview.createsFile
                   ? HealthLevel.info
                   : HealthLevel.warning,
@@ -2528,7 +2617,9 @@ class _JavaAliasesEditorDialogState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _preview == null ? '配置 Java 别名' : '确认保存 Java 别名',
+              _preview == null
+                  ? tr('Configure Java aliases')
+                  : tr('Confirm Java aliases'),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
@@ -2545,7 +2636,7 @@ class _JavaAliasesEditorDialogState
               child: _preview == null
                   ? _buildForm(colors)
                   : _CodePanel(
-                      title: '差异预览',
+                      title: tr('Diff preview'),
                       content: _preview!.diffPreview,
                       expand: true,
                     ),
@@ -2566,25 +2657,29 @@ class _JavaAliasesEditorDialogState
                             });
                           },
                     icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('返回编辑'),
+                    label: Text(tr('Back to editing')),
                   ),
                 OutlinedButton(
                   onPressed: _loadingPreview || _saving
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
+                  child: Text(tr('Cancel')),
                 ),
                 if (_preview == null)
                   FilledButton(
                     onPressed: _loadingPreview || !_hasChanges
                         ? null
                         : _generatePreview,
-                    child: Text(_loadingPreview ? '预览中...' : '预览变更'),
+                    child: Text(
+                      _loadingPreview
+                          ? tr('Previewing...')
+                          : tr('Preview changes'),
+                    ),
                   ),
                 if (_preview != null)
                   FilledButton(
                     onPressed: _saving ? null : _saveAliases,
-                    child: Text(_saving ? '保存中...' : '保存别名'),
+                    child: Text(_saving ? tr('Saving...') : tr('Save aliases')),
                   ),
               ],
             ),
@@ -2601,9 +2696,11 @@ class _JavaAliasesEditorDialogState
         SwitchListTile(
           value: _enabled,
           contentPadding: EdgeInsets.zero,
-          title: const Text('启用 Java 默认别名'),
+          title: Text(tr('Enable default Java aliases')),
           subtitle: Text(
-            '关闭时不会写入 [tool_alias.java.versions]；打开后可以编辑具体映射。',
+            tr(
+              'When off, [tool_alias.java.versions] is not written. Turn it on to edit the mapping.',
+            ),
             style: TextStyle(color: colors.textMuted, height: 1.4),
           ),
           onChanged: (value) {
@@ -2623,7 +2720,7 @@ class _JavaAliasesEditorDialogState
           children: [
             Expanded(
               child: Text(
-                '每行一个映射，例如 21 = "corretto-21"。',
+                tr('One mapping per line, e.g. 21 = "corretto-21".'),
                 style: TextStyle(color: colors.textMuted, height: 1.45),
               ),
             ),
@@ -2639,7 +2736,7 @@ class _JavaAliasesEditorDialogState
                       });
                     },
               icon: const Icon(Icons.restart_alt_rounded),
-              label: const Text('重置默认值'),
+              label: Text(tr('Reset defaults')),
             ),
           ],
         ),
@@ -2702,7 +2799,7 @@ class _JavaAliasesEditorDialogState
         return;
       }
       if (!preview.hasChanges) {
-        _showFeedback('没有变更，无需预览。');
+        _showFeedback(tr('No changes to preview.'));
         return;
       }
       setState(() {
@@ -2742,7 +2839,9 @@ class _JavaAliasesEditorDialogState
             HistoryEntry(
               command: preview.commandPreview,
               timestamp: _formatNow(),
-              detail: _enabled ? '已启用并写回 Java 别名。' : '已关闭 Java 别名配置。',
+              detail: _enabled
+                  ? tr('Enabled and saved Java aliases.')
+                  : tr('Disabled Java alias configuration.'),
               level: HealthLevel.info,
               status: HistoryStatus.success,
               exitCode: 0,
@@ -2771,7 +2870,7 @@ class _JavaAliasesEditorDialogState
 
     final aliases = _parseJavaAliasAssignments(_controller.text);
     if (aliases.isEmpty) {
-      _showFeedback('启用后至少需要保留一个 Java 别名。');
+      _showFeedback(tr('At least one Java alias is required when enabled.'));
       return null;
     }
 

@@ -7,12 +7,14 @@ import 'package:mise_gui/app/router/app_destination.dart';
 import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/app/theme/app_theme.dart';
 import 'package:mise_gui/features/dashboard/application/dashboard_provider.dart';
+import 'package:mise_gui/l10n/app_localizations.dart';
 import 'package:mise_gui/models/app_models.dart';
 import 'package:mise_gui/services/mise_self_update_service.dart';
 import 'package:mise_gui/services/mise_process_service.dart';
 import 'package:mise_gui/shared/ui/app_page_scaffold.dart';
 import 'package:mise_gui/shared/ui/app_panel.dart';
 import 'package:mise_gui/shared/ui/async_state_view.dart';
+import 'package:mise_gui/shared/ui/history_entry_dialog.dart';
 import 'package:mise_gui/shared/ui/recent_history_dialog.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -66,14 +68,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   Future<void> _handleRefresh() async {
     if (_refreshing) {
-      _showFeedback('正在刷新环境数据，请稍候。');
+      _showFeedback(tr('Refreshing environment data, please wait.'));
       return;
     }
 
     final now = DateTime.now();
     if (_lastRefreshAt != null &&
         now.difference(_lastRefreshAt!) < _refreshDebounce) {
-      _showFeedback('点击过于频繁，请 1 秒后再试。');
+      _showFeedback(tr('Too many clicks. Try again in a second.'));
       return;
     }
 
@@ -101,7 +103,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       final refreshed = ref.refresh(dashboardProvider.future);
       await refreshed;
       if (!silent) {
-        _showFeedback('环境数据已刷新。');
+        _showFeedback(tr('Environment data refreshed.'));
       }
     } catch (error) {
       if (!silent) {
@@ -143,9 +145,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   String _formatRefreshError(Object error) {
     if (isMiseCommandUnavailable(error)) {
-      return '刷新失败：未检测到 mise CLI。';
+      return tr('Refresh failed: mise CLI not found.');
     }
-    return '刷新失败，请稍后重试。';
+    return tr('Refresh failed. Please try again later.');
   }
 
   void _showFeedback(String message) {
@@ -159,13 +161,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLanguageProvider);
     final snapshot = ref.watch(dashboardProvider);
 
     return AsyncStateView(
       value: snapshot,
       builder: (data) => AppPageScaffold(
-        title: '环境总览',
-        description: '',
+        title: tr('Environment overview'),
+        description: tr('Live state of your local mise environment.'),
         actions: [
           OutlinedButton.icon(
             onPressed: _handleRefresh,
@@ -176,7 +179,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh_rounded),
-            label: Text(_refreshing ? '刷新中...' : '刷新环境数据'),
+            label: Text(
+              _refreshing
+                  ? tr('Refreshing...')
+                  : tr('Refresh environment data'),
+            ),
           ),
         ],
         child: _DashboardOverview(snapshot: data),
@@ -193,111 +200,24 @@ class _DashboardOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DashboardMetricGrid(metrics: snapshot.metrics),
-        const SizedBox(height: 28),
+        _EnvironmentConsole(metrics: snapshot.metrics),
+        const SizedBox(height: 30),
         const _MiseSelfUpdatePanel(),
-        const SizedBox(height: 28),
+        const SizedBox(height: 30),
         _RecentHistoryPanel(entries: snapshot.recentHistory),
       ],
     );
   }
 }
 
-class _DashboardMetricGrid extends StatelessWidget {
-  const _DashboardMetricGrid({required this.metrics});
+class _EnvironmentConsole extends StatelessWidget {
+  const _EnvironmentConsole({required this.metrics});
 
   final List<SummaryMetric> metrics;
 
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 20.0;
-        final systemMetric = _metricByLabel('当前系统');
-        final compactMetrics = metrics
-            .where((metric) => metric.label != '当前系统')
-            .toList(growable: false);
-
-        if (systemMetric == null) {
-          return _MetricWrap(
-            metrics: metrics,
-            spacing: spacing,
-            maxWidth: constraints.maxWidth,
-          );
-        }
-
-        if (constraints.maxWidth >= 1180 && compactMetrics.length >= 3) {
-          final systemWidth = (constraints.maxWidth - spacing) * 0.55;
-          final compactWidth = constraints.maxWidth - spacing - systemWidth;
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: systemWidth,
-                child: _DashboardMetricCard(metric: systemMetric),
-              ),
-              const SizedBox(width: spacing),
-              SizedBox(
-                width: compactWidth,
-                child: Column(
-                  children: [
-                    for (var index = 0; index < compactMetrics.length; index++)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          bottom: index == compactMetrics.length - 1
-                              ? 0
-                              : spacing,
-                        ),
-                        child: _DashboardMetricCard(
-                          metric: compactMetrics[index],
-                          compact: true,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }
-
-        final compactColumns = constraints.maxWidth >= 980
-            ? 3
-            : constraints.maxWidth >= 700
-            ? 2
-            : 1;
-        final compactWidth =
-            (constraints.maxWidth - spacing * (compactColumns - 1)) /
-            compactColumns;
-
-        return Column(
-          children: [
-            _DashboardMetricCard(metric: systemMetric),
-            if (compactMetrics.isNotEmpty) ...[
-              const SizedBox(height: spacing),
-              Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: [
-                  for (final metric in compactMetrics)
-                    SizedBox(
-                      width: compactWidth,
-                      child: _DashboardMetricCard(
-                        metric: metric,
-                        compact: true,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
-  SummaryMetric? _metricByLabel(String label) {
+  SummaryMetric? _metric(String label) {
     for (final metric in metrics) {
       if (metric.label == label) {
         return metric;
@@ -305,35 +225,563 @@ class _DashboardMetricGrid extends StatelessWidget {
     }
     return null;
   }
-}
-
-class _MetricWrap extends StatelessWidget {
-  const _MetricWrap({
-    required this.metrics,
-    required this.spacing,
-    required this.maxWidth,
-  });
-
-  final List<SummaryMetric> metrics;
-  final double spacing;
-  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
-    final twoColumns = maxWidth >= 980;
-    final cardWidth = twoColumns ? (maxWidth - spacing) / 2 : maxWidth;
+    final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final systemMetric = _metric('Current system');
+    final manifestMetrics = [
+      _metric('Installed tools'),
+      _metric('Project overrides'),
+      _metric('Mise version'),
+    ].whereType<SummaryMetric>().toList(growable: false);
 
-    return Wrap(
-      spacing: spacing,
-      runSpacing: spacing,
-      children: [
-        for (final metric in metrics)
-          SizedBox(
-            width: cardWidth,
-            child: _DashboardMetricCard(metric: metric),
+    return AppPanel(
+      padding: EdgeInsets.zero,
+      radius: 22,
+      backgroundAlpha: isDark ? 0.82 : 0.96,
+      borderAlpha: isDark ? 0.62 : 0.92,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (systemMetric != null) _HostSection(metric: systemMetric),
+          if (systemMetric != null && manifestMetrics.isNotEmpty)
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: colors.border.withValues(alpha: isDark ? 0.38 : 0.62),
+            ),
+          if (manifestMetrics.isNotEmpty)
+            _ManifestSection(metrics: manifestMetrics),
+        ],
+      ),
+    );
+  }
+}
+
+class _HostSection extends StatelessWidget {
+  const _HostSection({required this.metric});
+
+  final SummaryMetric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final details = _SystemMetricDetails.fromCaption(metric.caption);
+    final accent = _levelColor(colors, metric.level);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ConsoleSectionLabel(label: 'Host'),
+          const SizedBox(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      metric.value,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.6,
+                        height: 1.15,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (details.chips.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 20,
+                        runSpacing: 8,
+                        children: [
+                          for (final chip in details.chips)
+                            _MetaPair(label: chip.label, value: chip.value),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (details.items.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _SpecSheet(items: details.items),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ManifestSection extends StatelessWidget {
+  const _ManifestSection({required this.metrics});
+
+  final List<SummaryMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ConsoleSectionLabel(label: 'Manifest'),
+          const SizedBox(height: 4),
+          for (final metric in metrics)
+            _ManifestRow(
+              key: _keyForMetric(metric.label),
+              metric: metric,
+              destination: _destinationForMetric(metric.label),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManifestRow extends StatelessWidget {
+  const _ManifestRow({
+    super.key,
+    required this.metric,
+    required this.destination,
+  });
+
+  final SummaryMetric metric;
+  final AppDestination? destination;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = _levelColor(colors, metric.level);
+    final leaderColor = colors.borderStrong.withValues(
+      alpha: isDark ? 0.46 : 0.4,
+    );
+
+    final value = Text(
+      metric.value,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.right,
+      style: TextStyle(
+        fontFamily: 'JetBrains Mono',
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+        color: colors.textPrimary,
+        height: 1.2,
+      ),
+    );
+
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 560;
+        final dot = Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+        );
+        final label = Text(
+          tr(metric.label),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            height: 1.25,
+          ),
+        );
+        final caption = metric.caption.trim().isEmpty
+            ? null
+            : Text(
+                metric.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.textMuted,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              );
+        final arrow = destination == null
+            ? const SizedBox(width: 17)
+            : Icon(
+                Icons.arrow_forward_rounded,
+                size: 17,
+                color: colors.textMuted.withValues(alpha: 0.86),
+              );
+
+        if (narrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  dot,
+                  const SizedBox(width: 12),
+                  Expanded(child: label),
+                  const SizedBox(width: 16),
+                  value,
+                  const SizedBox(width: 7),
+                  arrow,
+                ],
+              ),
+              if (caption != null) ...[
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 19),
+                  child: caption,
+                ),
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            dot,
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  label,
+                  if (caption != null) ...[const SizedBox(height: 3), caption],
+                ],
+              ),
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 1,
+                width: double.infinity,
+                child: CustomPaint(painter: _DottedLeaderPainter(leaderColor)),
+              ),
+            ),
+            const SizedBox(width: 18),
+            value,
+            const SizedBox(width: 9),
+            arrow,
+          ],
+        );
+      },
+    );
+
+    if (destination == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+        child: body,
+      );
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(destination!.path),
+        borderRadius: BorderRadius.circular(12),
+        hoverColor: colors.hover,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+          child: body,
+        ),
+      ),
+    );
+  }
+}
+
+class _ConsoleSectionLabel extends StatelessWidget {
+  const _ConsoleSectionLabel({required this.label, this.trailing});
+
+  final String label;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Text(
+          tr(label).toUpperCase(),
+          style: TextStyle(
+            color: colors.textMuted.withValues(alpha: 0.9),
+            fontSize: 10,
+            fontFamily: 'JetBrains Mono',
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.6,
+            height: 1,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: colors.border.withValues(alpha: isDark ? 0.42 : 0.62),
+          ),
+        ),
+        if (trailing != null) ...[const SizedBox(width: 10), trailing!],
       ],
     );
+  }
+}
+
+class _MetaPair extends StatelessWidget {
+  const _MetaPair({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          tr(label),
+          style: TextStyle(
+            color: colors.textMuted.withValues(alpha: 0.88),
+            fontSize: 10,
+            fontFamily: 'JetBrains Mono',
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          value,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 12,
+            fontFamily: 'JetBrains Mono',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SpecSheet extends StatelessWidget {
+  const _SpecSheet({required this.items});
+
+  final List<_SystemInfoItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final line = colors.border.withValues(alpha: isDark ? 0.42 : 0.62);
+    final fullWidthItems = items.where((item) => item.fullWidth).toList();
+    final splitItems = items.where((item) => !item.fullWidth).toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 560;
+
+        return Container(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: line)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final item in fullWidthItems)
+                _SpecCell(
+                  item: item,
+                  border: Border(
+                    bottom: splitItems.isEmpty
+                        ? BorderSide.none
+                        : BorderSide(color: line),
+                  ),
+                ),
+              if (splitItems.isNotEmpty)
+                if (stacked)
+                  Column(
+                    children: [
+                      for (var index = 0; index < splitItems.length; index++)
+                        _SpecCell(
+                          item: splitItems[index],
+                          border: Border(
+                            bottom: index == splitItems.length - 1
+                                ? BorderSide.none
+                                : BorderSide(color: line),
+                          ),
+                        ),
+                    ],
+                  )
+                else
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (
+                          var index = 0;
+                          index < splitItems.length;
+                          index++
+                        ) ...[
+                          if (index > 0)
+                            VerticalDivider(
+                              width: 1,
+                              thickness: 1,
+                              color: line,
+                            ),
+                          Expanded(
+                            child: _SpecCell(
+                              item: splitItems[index],
+                              padding: EdgeInsets.only(
+                                left: index == 0 ? 0 : 20,
+                                right: index == 0 ? 20 : 0,
+                                top: 14,
+                                bottom: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SpecCell extends StatelessWidget {
+  const _SpecCell({
+    required this.item,
+    this.border = const Border(),
+    this.padding = const EdgeInsets.symmetric(vertical: 14),
+  });
+
+  final _SystemInfoItem item;
+  final Border border;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
+    return Container(
+      decoration: BoxDecoration(border: border),
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            tr(item.label),
+            style: TextStyle(
+              color: colors.textMuted.withValues(alpha: 0.88),
+              fontSize: 10,
+              fontFamily: 'JetBrains Mono',
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            item.value,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DottedLeaderPainter extends CustomPainter {
+  const _DottedLeaderPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+    const gap = 6.0;
+    const dash = 1.4;
+    for (var x = 0.0; x < size.width; x += gap) {
+      final end = x + dash > size.width ? size.width : x + dash;
+      canvas.drawLine(
+        Offset(x, size.height / 2),
+        Offset(end, size.height / 2),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DottedLeaderPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+Color _levelColor(AppPalette colors, HealthLevel level) {
+  return switch (level) {
+    HealthLevel.healthy => colors.accent,
+    HealthLevel.info => colors.info,
+    HealthLevel.warning => colors.warning,
+    HealthLevel.critical => colors.danger,
+  };
+}
+
+AppDestination? _destinationForMetric(String label) {
+  switch (label) {
+    case 'Installed tools':
+      return AppDestination.tools;
+    case 'Project overrides':
+      return AppDestination.projects;
+    default:
+      return null;
+  }
+}
+
+Key? _keyForMetric(String label) {
+  switch (label) {
+    case 'Installed tools':
+      return const ValueKey('dashboard-metric-tools');
+    case 'Project overrides':
+      return const ValueKey('dashboard-metric-projects');
+    default:
+      return null;
   }
 }
 
@@ -374,11 +822,15 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
       });
       _showFeedback(
         info.updateAvailable
-            ? '发现 mise ${info.latestVersion} 可用。'
-            : 'mise 已是最新版本。',
+            ? trArgs('mise {version} is available.', {
+                'version': info.latestVersion,
+              })
+            : tr('mise is up to date.'),
       );
     } catch (error) {
-      _showFeedback('检查 mise 更新失败，请稍后重试。');
+      _showFeedback(
+        tr('Failed to check for mise updates. Please try again later.'),
+      );
       if (mounted) {
         setState(() {
           _logs
@@ -402,19 +854,26 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('升级 mise'),
+        title: Text(tr('Upgrade mise')),
         content: Text(
-          '将执行 `${info.commandPreview}`，从 ${info.currentVersion} 升级到 ${info.latestVersion}。'
-          '\n\n已检测到安装来源：${info.installSourceLabel}。',
+          trArgs(
+            'This will run `{command}` to upgrade mise from {current} to {latest}.\n\nDetected install source: {source}.',
+            {
+              'command': info.commandPreview,
+              'current': info.currentVersion,
+              'latest': info.latestVersion,
+              'source': tr(info.installSourceLabel),
+            },
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('取消'),
+            child: Text(tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('开始升级'),
+            child: Text(tr('Start upgrade')),
           ),
         ],
       ),
@@ -454,8 +913,12 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
               command: info.commandPreview,
               timestamp: _formatNow(),
               detail: result.isSuccess
-                  ? '已通过界面执行 ${info.commandPreview}。'
-                  : '${info.commandPreview} 执行失败。',
+                  ? trArgs('Ran {command} from the app.', {
+                      'command': info.commandPreview,
+                    })
+                  : trArgs('{command} failed.', {
+                      'command': info.commandPreview,
+                    }),
               level: result.isSuccess
                   ? HealthLevel.healthy
                   : HealthLevel.warning,
@@ -476,7 +939,11 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
       setState(() {
         _appendLogs('exit ${result.exitCode}');
       });
-      _showFeedback(result.isSuccess ? 'mise 升级完成。' : 'mise 升级失败，已记录详情。');
+      _showFeedback(
+        result.isSuccess
+            ? tr('mise upgraded successfully.')
+            : tr('mise upgrade failed; details were recorded.'),
+      );
       ref.invalidate(dashboardProvider);
       if (result.isSuccess) {
         shouldRefreshAfterUpdate = true;
@@ -489,7 +956,7 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
             HistoryEntry(
               command: info.commandPreview,
               timestamp: _formatNow(),
-              detail: 'mise self-update 执行异常。',
+              detail: tr('mise self-update failed.'),
               level: HealthLevel.warning,
               status: HistoryStatus.failure,
               exitCode: -1,
@@ -502,7 +969,7 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
         setState(() {
           _appendLogs(error.toString());
         });
-        _showFeedback('mise 升级异常，已记录详情。');
+        _showFeedback(tr('mise upgrade error; details were recorded.'));
       }
     } finally {
       if (mounted) {
@@ -519,102 +986,146 @@ class _MiseSelfUpdatePanelState extends ConsumerState<_MiseSelfUpdatePanel> {
     final colors = AppTheme.colorsOf(context);
     final info = _updateInfo;
     final updateAvailable = info?.updateAvailable ?? false;
-    final accent = updateAvailable ? colors.warning : colors.info;
+    final accent = info == null
+        ? colors.info
+        : updateAvailable
+        ? colors.warning
+        : colors.accent;
 
-    return AppPanel(
-      padding: const EdgeInsets.all(22),
-      radius: 20,
-      backgroundAlpha: 0.74,
-      borderAlpha: 0.5,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(Icons.system_update_alt_rounded, color: accent),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'mise 本体更新',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _statusText(info),
-                      style: TextStyle(color: colors.textMuted, height: 1.45),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _checking || _updating ? null : _checkForUpdate,
-                    icon: _checking
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh_rounded),
-                    label: Text(_checking ? '检查中...' : '检查更新'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _ConsoleSectionLabel(label: 'Update'),
+        const SizedBox(height: 16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow = constraints.maxWidth < 760;
+            final summary = Row(
+              children: [
+                Icon(Icons.system_update_alt_rounded, color: accent, size: 19),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    tr('mise update'),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(fontSize: 16),
                   ),
-                  FilledButton.icon(
-                    onPressed: updateAvailable && !_checking && !_updating
-                        ? _runSelfUpdate
-                        : null,
-                    icon: _updating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.upgrade_rounded),
-                    label: Text(_updating ? '升级中...' : '升级 mise'),
+                ),
+                if (info != null) ...[
+                  const SizedBox(width: 12),
+                  Text(
+                    updateAvailable ? tr('Update available') : tr('Up to date'),
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 10,
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ],
+              ],
+            );
+            final status = Text(
+              _statusText(info),
+              style: TextStyle(
+                color: colors.textMuted,
+                fontSize: 13,
+                height: 1.45,
               ),
-            ],
-          ),
-          if (info != null) ...[
-            const SizedBox(height: 16),
-            _MiseUpdateVersionRow(info: info),
-          ],
-          if (_logs.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _MiseSelfUpdateLog(logs: _logs),
-          ],
+            );
+            final actions = Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                TextButton.icon(
+                  onPressed: _checking || _updating ? null : _checkForUpdate,
+                  icon: _checking
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text(
+                    _checking ? tr('Checking...') : tr('Check for updates'),
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: updateAvailable && !_checking && !_updating
+                      ? _runSelfUpdate
+                      : null,
+                  icon: _updating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upgrade_rounded, size: 18),
+                  label: Text(
+                    _updating ? tr('Upgrading...') : tr('Upgrade mise'),
+                  ),
+                ),
+              ],
+            );
+
+            if (narrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  summary,
+                  const SizedBox(height: 6),
+                  status,
+                  const SizedBox(height: 12),
+                  actions,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [summary, const SizedBox(height: 6), status],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Padding(padding: const EdgeInsets.only(top: 1), child: actions),
+              ],
+            );
+          },
+        ),
+        if (info != null) ...[
+          const SizedBox(height: 16),
+          _MiseUpdateVersionRow(info: info),
         ],
-      ),
+        if (_logs.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _MiseSelfUpdateLog(logs: _logs),
+        ],
+      ],
     );
   }
 
   String _statusText(MiseSelfUpdateInfo? info) {
     if (_updating) {
-      return '正在执行升级命令，请保持应用打开。';
+      return tr('Running the upgrade command. Keep the app open.');
     }
     if (info == null) {
-      return '检查当前 mise CLI 版本，并对比 GitHub 最新 release。';
+      return tr(
+        'Check the current mise CLI version against the latest GitHub release.',
+      );
     }
     if (info.updateAvailable) {
-      return '发现 ${info.tagName}，将通过 ${info.installSourceLabel} 在 GUI 内执行升级。';
+      return trArgs(
+        'Found {tag}; the upgrade will run in the GUI via {source}.',
+        {'tag': info.tagName, 'source': tr(info.installSourceLabel)},
+      );
     }
-    return '当前 mise 已是最新版本。';
+    return tr('mise is already up to date.');
   }
 
   void _appendLogs(String output) {
@@ -655,72 +1166,44 @@ class _MiseUpdateVersionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _VersionChip(label: '当前', value: info.currentVersion),
-        _VersionChip(label: '最新', value: info.latestVersion),
-        _VersionChip(label: '来源', value: info.installSourceLabel),
-        _VersionChip(label: '命令', value: info.commandPreview, mono: true),
-        if (!info.updateAvailable)
-          const _VersionChip(label: '状态', value: '无需升级')
-        else if (info.usesPackageManager)
-          Container(
-            constraints: const BoxConstraints(maxWidth: 520),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.panelMuted,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border),
-            ),
-            child: Text(
-              '检测到包管理器安装，将直接调用系统升级命令。',
-              style: TextStyle(color: colors.textMuted, height: 1.4),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _VersionChip extends StatelessWidget {
-  const _VersionChip({
-    required this.label,
-    required this.value,
-    this.mono = false,
-  });
-
-  final String label;
-  final String value;
-  final bool mono;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.panelMuted,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: TextStyle(color: colors.textMuted)),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontFamily: mono ? 'FiraCode' : null,
-            ),
+        Wrap(
+          spacing: 22,
+          runSpacing: 10,
+          children: [
+            _MetaPair(label: 'Current', value: info.currentVersion),
+            _MetaPair(label: 'Latest', value: info.latestVersion),
+            _MetaPair(label: 'Source', value: tr(info.installSourceLabel)),
+            _MetaPair(label: 'Command', value: info.commandPreview),
+            if (!info.updateAvailable)
+              _MetaPair(label: 'Status', value: tr('Up to date')),
+          ],
+        ),
+        if (info.updateAvailable && info.usesPackageManager) ...[
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline_rounded, size: 15, color: colors.warning),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  tr(
+                    'Package-manager install detected; the system upgrade command will be used.',
+                  ),
+                  style: TextStyle(
+                    color: colors.textMuted,
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -774,505 +1257,210 @@ class _RecentHistoryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final line = colors.border.withValues(alpha: isDark ? 0.4 : 0.62);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        _ConsoleSectionLabel(
+          label: 'Activity',
+          trailing: entries.isEmpty
+              ? null
+              : TextButton.icon(
+                  onPressed: () => showRecentHistoryDialog(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: Text(tr('View all')),
+                ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          tr('Review results of operations run from the app.'),
+          style: TextStyle(color: colors.textMuted, fontSize: 13, height: 1.45),
+        ),
+        const SizedBox(height: 14),
+        if (entries.isEmpty)
+          _ActivityEmptyState(line: line)
+        else
+          Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: line)),
+            ),
+            child: Column(
+              children: [
+                for (var index = 0; index < entries.length; index++) ...[
+                  if (index > 0) Divider(height: 1, thickness: 1, color: line),
+                  _ActivityRow(entry: entries[index]),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.entry});
+
+  final HistoryEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final statusColor = entry.isFailure ? colors.warning : colors.accent;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => showHistoryEntryDialog(context, entry: entry),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text('最近活动', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '查看最近通过界面执行过的操作结果。',
-                    style: TextStyle(color: colors.textMuted, height: 1.5),
+                    tr(entry.status.label).toUpperCase(),
+                    style: TextStyle(
+                      color: entry.isFailure
+                          ? statusColor
+                          : colors.textMuted.withValues(alpha: 0.9),
+                      fontSize: 10,
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '·',
+                      style: TextStyle(
+                        color: colors.textMuted.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    entry.timestamp,
+                    style: TextStyle(
+                      color: colors.textMuted,
+                      fontSize: 11,
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: colors.textMuted.withValues(alpha: 0.78),
                   ),
                 ],
               ),
-            ),
-            if (entries.isNotEmpty)
-              TextButton.icon(
-                onPressed: () => showRecentHistoryDialog(context),
-                icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                label: const Text('查看全部'),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (entries.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            decoration: BoxDecoration(
-              color: colors.panel.withValues(alpha: 0.52),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.border.withValues(alpha: 0.38)),
-            ),
-            child: Text(
-              '当前还没有最近操作记录。',
-              style: TextStyle(color: colors.textMuted),
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: entries.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              return RecentHistoryListTile(entry: entry);
-            },
-          ),
-      ],
-    );
-  }
-}
-
-class _DashboardMetricCard extends StatelessWidget {
-  const _DashboardMetricCard({required this.metric, this.compact = false});
-
-  final SummaryMetric metric;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-    final destination = _destinationFor(metric.label);
-    final accent = switch (metric.level) {
-      HealthLevel.healthy => colors.accent,
-      HealthLevel.info => colors.info,
-      HealthLevel.warning => colors.warning,
-      HealthLevel.critical => colors.danger,
-    };
-
-    const cardRadius = 20.0;
-    final child = metric.label == '当前系统'
-        ? _SystemMetricContent(metric: metric, accent: accent)
-        : compact
-        ? _CompactMetricContent(
-            metric: metric,
-            accent: accent,
-            hasDestination: destination != null,
-          )
-        : _DefaultMetricContent(
-            metric: metric,
-            accent: accent,
-            hasDestination: destination != null,
-          );
-    final panel = AppPanel(
-      key: _keyFor(metric.label),
-      padding: compact
-          ? const EdgeInsets.fromLTRB(18, 18, 18, 16)
-          : const EdgeInsets.all(22),
-      radius: cardRadius,
-      backgroundAlpha: 0.74,
-      borderAlpha: 0.5,
-      child: child,
-    );
-
-    if (destination == null) {
-      return panel;
-    }
-
-    return Tooltip(
-      message: '打开${destination.description}',
-      child: Semantics(
-        button: true,
-        label: '打开${metric.label}',
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(cardRadius),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(cardRadius),
-            onTap: () => context.go(destination.path),
-            child: panel,
-          ),
-        ),
-      ),
-    );
-  }
-
-  AppDestination? _destinationFor(String label) {
-    switch (label) {
-      case '已装工具':
-        return AppDestination.tools;
-      case '项目覆盖':
-        return AppDestination.projects;
-      default:
-        return null;
-    }
-  }
-
-  Key? _keyFor(String label) {
-    switch (label) {
-      case '已装工具':
-        return const ValueKey('dashboard-metric-tools');
-      case '项目覆盖':
-        return const ValueKey('dashboard-metric-projects');
-      default:
-        return null;
-    }
-  }
-}
-
-class _CompactMetricContent extends StatelessWidget {
-  const _CompactMetricContent({
-    required this.metric,
-    required this.accent,
-    required this.hasDestination,
-  });
-
-  final SummaryMetric metric;
-  final Color accent;
-  final bool hasDestination;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _iconForMetric(metric.label),
-                  color: accent,
-                  size: 19,
+              const SizedBox(height: 8),
+              Text(
+                entry.command,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  metric.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              if (hasDestination)
-                Icon(
-                  Icons.arrow_forward_rounded,
+              const SizedBox(height: 3),
+              Text(
+                entry.detail,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
                   color: colors.textMuted,
-                  size: 20,
+                  fontSize: 12,
+                  height: 1.4,
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            metric.value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: accent,
-              height: 1,
-              fontSize: 34,
-            ),
-          ),
-          if (metric.caption.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              metric.caption,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: colors.textMuted,
-                fontSize: 13,
-                height: 1.35,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _DefaultMetricContent extends StatelessWidget {
-  const _DefaultMetricContent({
-    required this.metric,
-    required this.accent,
-    required this.hasDestination,
-  });
-
-  final SummaryMetric metric;
-  final Color accent;
-  final bool hasDestination;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 178),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _MetricHeader(
-            label: metric.label,
-            icon: _iconForMetric(metric.label),
-            accent: accent,
-            trailing: hasDestination
-                ? Icon(
-                    Icons.arrow_forward_rounded,
-                    color: colors.textMuted,
-                    size: 20,
-                  )
-                : null,
-          ),
-          const SizedBox(height: 26),
-          Text(
-            metric.value,
-            style: Theme.of(
-              context,
-            ).textTheme.displaySmall?.copyWith(color: accent, height: 1),
-          ),
-          if (metric.caption.trim().isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              metric.caption,
-              style: TextStyle(
-                color: colors.textMuted,
-                fontSize: 13,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SystemMetricContent extends StatelessWidget {
-  const _SystemMetricContent({required this.metric, required this.accent});
-
-  final SummaryMetric metric;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final details = _SystemMetricDetails.fromCaption(metric.caption);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 178),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _MetricHeader(
-            label: metric.label,
-            icon: _iconForMetric(metric.label),
-            accent: accent,
-          ),
-          const SizedBox(height: 20),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              metric.value,
-              maxLines: 1,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: accent,
-                height: 1,
-                fontSize: 34,
-              ),
-            ),
-          ),
-          if (details.chips.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final chip in details.chips)
-                  _SystemInfoChip(label: chip.label, value: chip.value),
-              ],
-            ),
-          ],
-          if (details.items.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            _SystemInfoGrid(items: details.items),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricHeader extends StatelessWidget {
-  const _MetricHeader({
-    required this.label,
-    required this.icon,
-    required this.accent,
-    this.trailing,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color accent;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Icon(icon, color: accent, size: 20),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(label, style: Theme.of(context).textTheme.titleLarge),
-        ),
-        if (trailing != null) trailing!,
-      ],
+      ),
     );
   }
 }
 
-class _SystemInfoGrid extends StatelessWidget {
-  const _SystemInfoGrid({required this.items});
+class _ActivityEmptyState extends StatelessWidget {
+  const _ActivityEmptyState({required this.line});
 
-  final List<_SystemInfoItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 10.0;
-        final twoColumns = constraints.maxWidth >= 520;
-        final tileWidth = twoColumns
-            ? (constraints.maxWidth - spacing) / 2
-            : constraints.maxWidth;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final item in items)
-              SizedBox(
-                width: item.fullWidth ? constraints.maxWidth : tileWidth,
-                child: _SystemInfoTile(item: item),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _SystemInfoTile extends StatelessWidget {
-  const _SystemInfoTile({required this.item});
-
-  final _SystemInfoItem item;
+  final Color line;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 18),
       decoration: BoxDecoration(
-        color: colors.panelMuted.withValues(alpha: 0.48),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border.withValues(alpha: 0.44)),
+        border: Border(
+          top: BorderSide(color: line),
+          bottom: BorderSide(color: line),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(item.icon, color: colors.textMuted, size: 17),
-          const SizedBox(width: 9),
+          Icon(
+            Icons.terminal_rounded,
+            size: 18,
+            color: colors.textMuted.withValues(alpha: 0.9),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  item.label,
-                  style: TextStyle(
-                    color: colors.textMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.value,
+                  tr('No recent operations yet.'),
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tr(
+                    'Run an install or upgrade from Tools and it will appear here.',
+                  ),
+                  style: TextStyle(
+                    color: colors.textMuted,
+                    fontSize: 12,
+                    height: 1.4,
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SystemInfoChip extends StatelessWidget {
-  const _SystemInfoChip({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: colors.info.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.info.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            value,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1,
             ),
           ),
         ],
@@ -1298,39 +1486,35 @@ class _SystemMetricDetails {
             .where((value) => value.isNotEmpty)) {
       if (line.startsWith('Build ')) {
         chips.add(
-          _SystemInfoChipData(label: 'Build', value: line.substring(6)),
+          _SystemInfoChipData(label: tr('Build'), value: line.substring(6)),
         );
-      } else if (line.endsWith(' 架构')) {
+      } else if (line.endsWith(' arch') || line.endsWith(' 架构')) {
+        final suffixLength = line.endsWith(' arch') ? 5 : 3;
         chips.add(
           _SystemInfoChipData(
-            label: '架构',
-            value: line.substring(0, line.length - 3),
+            label: tr('Architecture'),
+            value: line.substring(0, line.length - suffixLength),
           ),
         );
-      } else if (line.startsWith('内存 ')) {
+      } else if (line.startsWith('Memory ') || line.startsWith('内存 ')) {
+        final prefixLength = line.startsWith('Memory ') ? 7 : 3;
         items.add(
           _SystemInfoItem(
-            label: '内存',
-            value: line.substring(3),
-            icon: Icons.memory_rounded,
+            label: tr('Memory'),
+            value: line.substring(prefixLength),
           ),
         );
-      } else if (line.startsWith('磁盘 ')) {
+      } else if (line.startsWith('Disk ') || line.startsWith('磁盘 ')) {
+        final prefixLength = line.startsWith('Disk ') ? 5 : 3;
         items.add(
           _SystemInfoItem(
-            label: '磁盘',
-            value: line.substring(3),
-            icon: Icons.storage_rounded,
+            label: tr('Disk'),
+            value: line.substring(prefixLength),
           ),
         );
       } else {
         items.add(
-          _SystemInfoItem(
-            label: '处理器',
-            value: line,
-            icon: Icons.developer_board_rounded,
-            fullWidth: true,
-          ),
+          _SystemInfoItem(label: tr('Processor'), value: line, fullWidth: true),
         );
       }
     }
@@ -1350,27 +1534,10 @@ class _SystemInfoItem {
   const _SystemInfoItem({
     required this.label,
     required this.value,
-    required this.icon,
     this.fullWidth = false,
   });
 
   final String label;
   final String value;
-  final IconData icon;
   final bool fullWidth;
-}
-
-IconData _iconForMetric(String label) {
-  switch (label) {
-    case '当前系统':
-      return Icons.desktop_windows_rounded;
-    case '已装工具':
-      return Icons.extension_rounded;
-    case '项目覆盖':
-      return Icons.account_tree_rounded;
-    case 'Mise 版本':
-      return Icons.verified_rounded;
-    default:
-      return Icons.data_usage_rounded;
-  }
 }
