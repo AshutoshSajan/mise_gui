@@ -51,7 +51,7 @@ Chinese switch.
 
 Operations are explicit. Installs and upgrades move through a command preview
 before execution, and every result is recorded with status, duration, and exit
-code in Recent activity.
+code in Activity.
 
 ## Light and dark
 
