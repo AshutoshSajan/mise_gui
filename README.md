@@ -1,90 +1,125 @@
 <p align="center">
-  <img src="docs/brand-mark.png" alt="Mise GUI logo" width="104" height="104">
+  <img src="docs/brand-mark.png" alt="Mise GUI" width="96" height="96">
 </p>
 
 <h1 align="center">Mise GUI</h1>
 
 <p align="center">
-  <strong>A desktop control room for your local mise environment.</strong><br>
-  See what is installed, what projects override, and what changed — without reading raw CLI output.
+  <strong>Your mise environment, at a glance.</strong><br>
+  A calm desktop console for the toolchains, versions, and projects that mise manages.
 </p>
 
 <p align="center">
-  <a href="README.zh.md">简体中文</a> · English
+  <a href="#install">Install</a> ·
+  <a href="#a-closer-look">Features</a> ·
+  <a href="#development">Development</a> ·
+  <a href="README.zh.md">简体中文</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/downloads/likaia/mise_gui/total.svg?style=flat" alt="Downloads"></a>
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/release/likaia/mise_gui.svg?style=flat" alt="Latest release"></a>
-  <a href="https://github.com/likaia/mise_gui/actions/workflows/ci.yml"><img src="https://github.com/likaia/mise_gui/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/likaia/mise_gui.svg?style=flat" alt="License"></a>
-  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg?style=flat" alt="Platforms"></a>
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/v/release/likaia/mise_gui?style=flat-square&label=release&labelColor=0F172A&color=22C55E" alt="Latest release"></a>
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-22C55E?style=flat-square&labelColor=0F172A" alt="Platforms"></a>
+  <a href="https://github.com/likaia/mise_gui/releases"><img src="https://img.shields.io/github/downloads/likaia/mise_gui/total?style=flat-square&label=downloads&labelColor=0F172A&color=38BDF8" alt="Downloads"></a>
+  <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/likaia/mise_gui?style=flat-square&label=license&labelColor=0F172A&color=38BDF8" alt="License"></a>
 </p>
 
-![Mise GUI environment console in dark mode](docs/dashboard-dark.png)
+<br>
 
-## Why Mise GUI
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/dashboard-light.png">
+    <img src="docs/dashboard-light.png" alt="Mise GUI environment console" width="100%">
+  </picture>
+</p>
 
-Mise makes it easy to pin tools per project. The hard part is seeing the whole
-picture: which versions are active, which projects override the defaults, and
-whether the last upgrade actually succeeded.
+## The view from above
 
-Mise GUI reads real mise state and puts that picture on one screen. It is built
-for developers who move between languages and repositories all day and want to
-answer three questions immediately:
+mise makes it easy to pin a toolchain per project. The hard part is seeing the
+whole picture: which versions are active, which projects override the defaults,
+and whether the last upgrade actually worked.
 
-- What is installed and active right now?
-- Which projects override my global toolchain?
-- What happened the last time I ran an operation?
+Mise GUI reads your real mise state and puts that picture on one screen. No
+separate database, no sync step.
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <strong>See</strong><br><br>
+      Installed and active versions, host details, and the current mise version
+      in one readable ledger.
+    </td>
+    <td width="33%" valign="top">
+      <strong>Trace</strong><br><br>
+      Which projects override your global toolchain, and what happened the last
+      time you ran an operation.
+    </td>
+    <td width="33%" valign="top">
+      <strong>Act</strong><br><br>
+      Switch versions, upgrade mise, and edit TOML with a command preview before
+      anything runs.
+    </td>
+  </tr>
+</table>
 
 The interface ships in English by default and includes a built-in Simplified
 Chinese switch.
 
-## What you can do
+## A closer look
 
-| Surface | What it gives you |
-| --- | --- |
-| **Environment console** | Host details, installed tool count, project overrides, and the mise version in one readable ledger. |
-| **Tools** | Current and latest versions per tool, remote version loading, version switching, upgrades, and uninstalls. |
-| **Projects** | Multi-directory scanning that highlights projects overriding global defaults. |
-| **Config** | Global and project TOML in one context, with a diff preview before saving. |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/feature-overview.png" alt="Environment overview" width="100%">
+      <br>
+      <strong>Environment console</strong><br>
+      <sub>Host details, installed tools, project overrides, and the mise version in one place.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/feature-tools.png" alt="Tool versions" width="100%">
+      <br>
+      <strong>Tools</strong><br>
+      <sub>Current and latest versions per tool, remote version loading, switching, upgrades, and uninstalls.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/feature-projects.png" alt="Project overrides" width="100%">
+      <br>
+      <strong>Projects</strong><br>
+      <sub>Multi-directory scanning that highlights only the projects overriding global defaults.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/feature-config.png" alt="Configuration management" width="100%">
+      <br>
+      <strong>Config</strong><br>
+      <sub>Global and project TOML in one context, with a diff preview before saving.</sub>
+    </td>
+  </tr>
+</table>
 
-Operations are explicit. Installs and upgrades move through a command preview
-before execution, and every result is recorded with status, duration, and exit
-code in Activity.
-
-## Light and dark
-
-The console is designed for long sessions in either appearance. Both themes use
-the same hairline structure, status dots, and typographic hierarchy.
-
-<p align="center">
-  <img src="docs/dashboard-light.png" width="49%" alt="Mise GUI dashboard in light mode">
-  <img src="docs/dashboard-dark.png" width="49%" alt="Mise GUI dashboard in dark mode">
-</p>
+> **Nothing runs by surprise.** Installs and upgrades show the exact command
+> first. Every result is recorded with status, duration, and exit code in
+> Activity.
 
 ## Install
 
-1. Install [mise](https://mise.jdx.dev/) if it is not already available:
+**1 · Install mise**, if it is not already on your machine:
 
-   ```bash
-   # macOS
-   brew install mise
+| Platform | Command |
+| --- | --- |
+| macOS | `brew install mise` |
+| Windows | `winget install jdx.mise` |
+| Linux | `curl https://mise.run \| sh` |
 
-   # Windows
-   winget install jdx.mise
-
-   # Linux
-   curl https://mise.run | sh
-   ```
-
-2. Download the latest Mise GUI build for your platform from
-   [Releases](https://github.com/likaia/mise_gui/releases).
+**2 · Download Mise GUI** from
+[Releases](https://github.com/likaia/mise_gui/releases). Builds are published for
+macOS, Linux, and Windows.
 
 If mise is missing, the app opens an onboarding screen with the recommended
 install command instead of failing silently.
 
-## Local development
+## Development
 
 The repository pins Flutter through `mise.toml`, so the first command installs
 the expected SDK:
@@ -95,19 +130,10 @@ cd mise_gui
 
 mise install
 flutter pub get
-flutter run -d linux
+flutter run -d linux   # or: macos / windows
 ```
 
-Use the matching desktop target on other platforms:
-
-```bash
-flutter run -d macos
-flutter run -d windows
-```
-
-### Verification
-
-Run the same checks before opening a pull request:
+Before opening a pull request, run the same checks as CI:
 
 ```bash
 dart format --output=none --set-exit-if-changed .
@@ -117,16 +143,17 @@ npm run deps:check
 ```
 
 `npm run deps:check` verifies that every direct and transitive dependency is on
-a supported stable release. See [AGENTS.md](AGENTS.md) for the dependency and
-release rules used by this repository.
+a supported stable release. CI runs the same checks on pull requests targeting
+`master`. Dependency and release rules live in [AGENTS.md](AGENTS.md).
 
-## Project structure
+<details>
+<summary><strong>Project structure</strong></summary>
 
 ```text
 lib/
   app/                  # Bootstrap, routing, theme, and application shell
   features/
-    dashboard/          # Environment console and recent activity
+    dashboard/          # Environment console and activity
     tools/              # Versions, install, upgrade, and uninstall flows
     projects/           # Scan directories and project coverage
     config/             # Global and project configuration management
@@ -141,15 +168,30 @@ scripts/                # Packaging, dependency, and hook scripts
 docs/                   # README screenshots and brand assets
 ```
 
-## Built with
+</details>
 
-Flutter · Riverpod 3 · go_router · package_info_plus · file_selector
+<details>
+<summary><strong>Design details</strong></summary>
 
-The interface uses bundled [IBM Plex Sans](https://github.com/IBM/plex) and
-[JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) faces under the SIL
-Open Font License. License texts live in `assets/fonts/`.
+- **Appearance** — light, dark, and follow-system modes share the same hairline
+  structure, status colors, and typographic hierarchy.
+- **Type** — bundled [IBM Plex Sans](https://github.com/IBM/plex) and
+  [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) faces under the
+  SIL Open Font License. License texts live in `assets/fonts/`.
+- **Language** — English source strings with a complete Simplified Chinese
+  catalog, checked by tests.
+- **Stack** — Flutter · Riverpod 3 · go_router · file_selector ·
+  package_info_plus.
+
+</details>
 
 ## License
 
 This project is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt)
 for details.
+
+---
+
+<p align="center">
+  <sub>Built with Flutter. Read the <a href="README.zh.md">Chinese README</a>.</sub>
+</p>
