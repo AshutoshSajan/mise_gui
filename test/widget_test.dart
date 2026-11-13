@@ -145,6 +145,13 @@ const _dashboardSnapshot = DashboardSnapshot(
       caption:
           'Build 25E253\narm64 arch\nApple M5 Pro\nMemory 48 GB\nDisk 557 GB available / 926 GB total',
       level: HealthLevel.info,
+      systemInfo: SystemInfo(
+        build: '25E253',
+        architecture: 'arm64',
+        processor: 'Apple M5 Pro',
+        memory: '48 GB',
+        disk: '557 GB available / 926 GB total',
+      ),
     ),
     SummaryMetric(
       label: 'Installed tools',

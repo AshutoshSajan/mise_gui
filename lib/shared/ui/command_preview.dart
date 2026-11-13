@@ -29,7 +29,7 @@ class CommandPreview extends StatelessWidget {
             child: SelectableText(
               command,
               style: TextStyle(
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 13,
                 height: 1.6,
                 color: colors.textPrimary,

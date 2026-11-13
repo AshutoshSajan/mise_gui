@@ -268,7 +268,7 @@ class _HostSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
-    final details = _SystemMetricDetails.fromCaption(metric.caption);
+    final details = _SystemMetricDetails.fromSystemInfo(metric.systemInfo);
     final accent = _levelColor(colors, metric.level);
 
     return Padding(
@@ -1238,7 +1238,7 @@ class _MiseSelfUpdateLog extends StatelessWidget {
             line,
             style: TextStyle(
               color: colors.textMuted,
-              fontFamily: 'FiraCode',
+              fontFamily: 'JetBrains Mono',
               fontSize: 12,
               height: 1.4,
             ),
@@ -1475,51 +1475,32 @@ class _SystemMetricDetails {
   final List<_SystemInfoChipData> chips;
   final List<_SystemInfoItem> items;
 
-  factory _SystemMetricDetails.fromCaption(String caption) {
-    final chips = <_SystemInfoChipData>[];
-    final items = <_SystemInfoItem>[];
-
-    for (final line
-        in caption
-            .split('\n')
-            .map((value) => value.trim())
-            .where((value) => value.isNotEmpty)) {
-      if (line.startsWith('Build ')) {
-        chips.add(
-          _SystemInfoChipData(label: tr('Build'), value: line.substring(6)),
-        );
-      } else if (line.endsWith(' arch') || line.endsWith(' 架构')) {
-        final suffixLength = line.endsWith(' arch') ? 5 : 3;
-        chips.add(
-          _SystemInfoChipData(
-            label: tr('Architecture'),
-            value: line.substring(0, line.length - suffixLength),
-          ),
-        );
-      } else if (line.startsWith('Memory ') || line.startsWith('内存 ')) {
-        final prefixLength = line.startsWith('Memory ') ? 7 : 3;
-        items.add(
-          _SystemInfoItem(
-            label: tr('Memory'),
-            value: line.substring(prefixLength),
-          ),
-        );
-      } else if (line.startsWith('Disk ') || line.startsWith('磁盘 ')) {
-        final prefixLength = line.startsWith('Disk ') ? 5 : 3;
-        items.add(
-          _SystemInfoItem(
-            label: tr('Disk'),
-            value: line.substring(prefixLength),
-          ),
-        );
-      } else {
-        items.add(
-          _SystemInfoItem(label: tr('Processor'), value: line, fullWidth: true),
-        );
-      }
+  factory _SystemMetricDetails.fromSystemInfo(SystemInfo? info) {
+    if (info == null) {
+      return const _SystemMetricDetails(chips: [], items: []);
     }
 
-    return _SystemMetricDetails(chips: chips, items: items);
+    return _SystemMetricDetails(
+      chips: [
+        if (info.build case final build? when build.isNotEmpty)
+          _SystemInfoChipData(label: tr('Build'), value: build),
+        if (info.architecture case final architecture?
+            when architecture.isNotEmpty)
+          _SystemInfoChipData(label: tr('Architecture'), value: architecture),
+      ],
+      items: [
+        if (info.processor case final processor? when processor.isNotEmpty)
+          _SystemInfoItem(
+            label: tr('Processor'),
+            value: processor,
+            fullWidth: true,
+          ),
+        if (info.memory case final memory? when memory.isNotEmpty)
+          _SystemInfoItem(label: tr('Memory'), value: memory),
+        if (info.disk case final disk? when disk.isNotEmpty)
+          _SystemInfoItem(label: tr('Disk'), value: disk),
+      ],
+    );
   }
 }
 

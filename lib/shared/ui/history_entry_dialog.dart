@@ -204,7 +204,7 @@ class _DialogContextLine extends StatelessWidget {
       style: TextStyle(
         color: colors.textMuted.withValues(alpha: 0.9),
         fontSize: 12,
-        fontFamily: 'FiraCode',
+        fontFamily: 'JetBrains Mono',
         fontWeight: FontWeight.w600,
       ),
     );
@@ -247,7 +247,7 @@ class _CommandBlock extends StatelessWidget {
           entry.command,
           style: TextStyle(
             color: colors.textPrimary,
-            fontFamily: 'FiraCode',
+            fontFamily: 'JetBrains Mono',
             fontSize: 13,
             height: 1.55,
             fontWeight: FontWeight.w600,
@@ -294,7 +294,7 @@ class _LogPanel extends StatelessWidget {
             child: SelectableText(
               content,
               style: TextStyle(
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 12.5,
                 height: 1.58,
                 color: emphasize ? colors.warning : colors.textPrimary,
@@ -346,7 +346,7 @@ class _SurfaceBlock extends StatelessWidget {
                   tr(title),
                   style: TextStyle(
                     color: emphasize ? colors.warning : colors.textPrimary,
-                    fontFamily: 'FiraCode',
+                    fontFamily: 'JetBrains Mono',
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),

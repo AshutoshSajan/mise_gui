@@ -250,7 +250,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                   risk.path,
                   style: TextStyle(
                     color: colors.textPrimary,
-                    fontFamily: 'FiraCode',
+                    fontFamily: 'JetBrains Mono',
                     fontSize: 12,
                     height: 1.45,
                   ),
@@ -869,7 +869,7 @@ class _ScanDirectoryCard extends StatelessWidget {
                       directory.path,
                       style: TextStyle(
                         color: colors.textMuted,
-                        fontFamily: 'FiraCode',
+                        fontFamily: 'JetBrains Mono',
                         fontSize: 12,
                         height: 1.45,
                       ),

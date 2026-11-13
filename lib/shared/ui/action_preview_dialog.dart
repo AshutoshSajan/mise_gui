@@ -405,7 +405,7 @@ class _InfoBlock extends StatelessWidget {
           Text(
             tr(title),
             style: const TextStyle(
-              fontFamily: 'FiraCode',
+              fontFamily: 'JetBrains Mono',
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -443,7 +443,7 @@ class _MetaLine extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 height: 1.45,
-                fontFamily: mono ? 'FiraCode' : null,
+                fontFamily: mono ? 'JetBrains Mono' : null,
               ),
             ),
           ),
@@ -487,7 +487,7 @@ class _CodeCard extends StatelessWidget {
                 child: Text(
                   tr(title),
                   style: const TextStyle(
-                    fontFamily: 'FiraCode',
+                    fontFamily: 'JetBrains Mono',
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
@@ -521,7 +521,7 @@ class _CommandText extends StatelessWidget {
       child: SelectableText(
         content,
         style: const TextStyle(
-          fontFamily: 'FiraCode',
+          fontFamily: 'JetBrains Mono',
           fontSize: 13,
           height: 1.6,
         ),
