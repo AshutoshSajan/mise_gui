@@ -428,7 +428,7 @@ class _ManifestRow extends StatelessWidget {
                 ),
               );
         final arrow = destination == null
-            ? null
+            ? const SizedBox(width: 17)
             : Icon(
                 Icons.arrow_forward_rounded,
                 size: 17,
@@ -446,7 +446,8 @@ class _ManifestRow extends StatelessWidget {
                   Expanded(child: label),
                   const SizedBox(width: 16),
                   value,
-                  if (arrow != null) ...[const SizedBox(width: 7), arrow],
+                  const SizedBox(width: 7),
+                  arrow,
                 ],
               ),
               if (caption != null) ...[
@@ -485,7 +486,8 @@ class _ManifestRow extends StatelessWidget {
             ),
             const SizedBox(width: 18),
             value,
-            if (arrow != null) ...[const SizedBox(width: 9), arrow],
+            const SizedBox(width: 9),
+            arrow,
           ],
         );
       },
@@ -493,7 +495,7 @@ class _ManifestRow extends StatelessWidget {
 
     if (destination == null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
         child: body,
       );
     }
@@ -503,7 +505,7 @@ class _ManifestRow extends StatelessWidget {
       child: InkWell(
         onTap: () => context.go(destination!.path),
         borderRadius: BorderRadius.circular(12),
-        hoverColor: colors.hover.withValues(alpha: isDark ? 0.7 : 0.45),
+        hoverColor: colors.hover,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
           child: body,
@@ -1280,11 +1282,6 @@ class _RecentHistoryPanel extends StatelessWidget {
                 ),
         ),
         const SizedBox(height: 14),
-        Text(
-          tr('Recent activity'),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 6),
         Text(
           tr('Review results of operations run from the app.'),
           style: TextStyle(color: colors.textMuted, fontSize: 13, height: 1.45),
