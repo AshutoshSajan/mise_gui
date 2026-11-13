@@ -7,6 +7,7 @@
   "scripts": {
     "help": "cat ./scripts/README.md",
     "deps:check": "dart run ./scripts/check_outdated_deps.dart",
+    "deps:outdated": "dart run ./scripts/check_outdated_deps.dart --all",
     "deps:update": "flutter pub upgrade --major-versions",
     "hooks:install": "bash ./scripts/setup_git_hooks.sh",
     "macos:dmg:background": "python3 ./scripts/generate_macos_dmg_background.py",

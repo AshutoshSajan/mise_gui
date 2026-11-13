@@ -57,6 +57,7 @@ class DashboardRepository {
           value: operatingSystemInfo.label,
           caption: operatingSystemInfo.caption,
           level: HealthLevel.info,
+          systemInfo: operatingSystemInfo.systemInfo,
         ),
         SummaryMetric(
           label: 'Installed tools',
@@ -183,13 +184,23 @@ class DashboardRepository {
     return null;
   }
 
-  String _operatingSystemCaption() {
-    final arch = switch (Abi.current()) {
+  String _operatingSystemArchitecture() {
+    return switch (Abi.current()) {
       Abi.macosArm64 || Abi.linuxArm64 || Abi.windowsArm64 => 'arm64',
       Abi.macosX64 || Abi.linuxX64 || Abi.windowsX64 => 'x64',
       _ => Abi.current().toString().split('.').last,
     };
-    return '$arch arch';
+  }
+
+  Future<({String? processor, String? memory, String? disk})>
+  _loadDeviceDetails() async {
+    final details = await Future.wait<String?>([
+      _loadCpuModel(),
+      _loadMemoryInfo(),
+      _loadDiskInfo(),
+    ]);
+
+    return (processor: details[0], memory: details[1], disk: details[2]);
   }
 
   Future<_OperatingSystemInfo> _loadOperatingSystemInfo() async {
@@ -200,18 +211,19 @@ class DashboardRepository {
 
     final version = await _operatingSystemVersion();
     final build = await _operatingSystemBuild();
+    final device = await _loadDeviceDetails();
     final label = version == null || version.isEmpty
         ? systemName
         : '$systemName $version';
-    final captionParts = <String>[];
 
-    if (build != null && build.isNotEmpty) {
-      captionParts.add('Build $build');
-    }
-    captionParts.add(_operatingSystemCaption());
-    await _appendDeviceDetails(captionParts);
-
-    return _OperatingSystemInfo(label: label, caption: captionParts.join('\n'));
+    return _OperatingSystemInfo(
+      label: label,
+      build: build,
+      architecture: _operatingSystemArchitecture(),
+      processor: device.processor,
+      memory: device.memory,
+      disk: device.disk,
+    );
   }
 
   Future<_OperatingSystemInfo> _loadWindowsOperatingSystemInfo(
@@ -220,13 +232,7 @@ class DashboardRepository {
     final parsed = _parseWindowsOperatingSystemVersion(
       Platform.operatingSystemVersion,
     );
-    final captionParts = <String>[];
-
-    if (parsed.build != null && parsed.build!.isNotEmpty) {
-      captionParts.add('Build ${parsed.build}');
-    }
-    captionParts.add(_operatingSystemCaption());
-    await _appendDeviceDetails(captionParts);
+    final device = await _loadDeviceDetails();
 
     final label = switch ((parsed.productName, parsed.kernelVersion)) {
       (final String productName?, _) when productName.isNotEmpty => productName,
@@ -235,7 +241,14 @@ class DashboardRepository {
       _ => systemName,
     };
 
-    return _OperatingSystemInfo(label: label, caption: captionParts.join('\n'));
+    return _OperatingSystemInfo(
+      label: label,
+      build: parsed.build,
+      architecture: _operatingSystemArchitecture(),
+      processor: device.processor,
+      memory: device.memory,
+      disk: device.disk,
+    );
   }
 
   _WindowsOperatingSystemVersion _parseWindowsOperatingSystemVersion(
@@ -258,29 +271,6 @@ class DashboardRepository {
       kernelVersion: kernelVersion,
       build: build,
     );
-  }
-
-  Future<void> _appendDeviceDetails(List<String> captionParts) async {
-    final details = await Future.wait<String?>([
-      _loadCpuModel(),
-      _loadMemoryInfo(),
-      _loadDiskInfo(),
-    ]);
-
-    final cpuModel = details[0];
-    if (cpuModel != null && cpuModel.isNotEmpty) {
-      captionParts.add(cpuModel);
-    }
-
-    final memoryInfo = details[1];
-    if (memoryInfo != null && memoryInfo.isNotEmpty) {
-      captionParts.add('Memory $memoryInfo');
-    }
-
-    final diskInfo = details[2];
-    if (diskInfo != null && diskInfo.isNotEmpty) {
-      captionParts.add('Disk $diskInfo');
-    }
   }
 
   Future<String?> _loadCpuModel() async {
@@ -499,10 +489,37 @@ class _MiseVersionInfo {
 }
 
 class _OperatingSystemInfo {
-  const _OperatingSystemInfo({required this.label, required this.caption});
+  const _OperatingSystemInfo({
+    required this.label,
+    required this.architecture,
+    this.build,
+    this.processor,
+    this.memory,
+    this.disk,
+  });
 
   final String label;
-  final String caption;
+  final String architecture;
+  final String? build;
+  final String? processor;
+  final String? memory;
+  final String? disk;
+
+  String get caption => [
+    if (build != null && build!.isNotEmpty) 'Build $build',
+    '$architecture arch',
+    if (processor != null && processor!.isNotEmpty) processor!,
+    if (memory != null && memory!.isNotEmpty) 'Memory $memory',
+    if (disk != null && disk!.isNotEmpty) 'Disk $disk',
+  ].join('\n');
+
+  SystemInfo get systemInfo => SystemInfo(
+    build: build,
+    architecture: architecture,
+    processor: processor,
+    memory: memory,
+    disk: disk,
+  );
 }
 
 class _WindowsOperatingSystemVersion {

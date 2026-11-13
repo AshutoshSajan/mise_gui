@@ -741,7 +741,7 @@ class _DocumentPathLine extends StatelessWidget {
           child: SelectableText(
             document.path,
             style: const TextStyle(
-              fontFamily: 'FiraCode',
+              fontFamily: 'JetBrains Mono',
               fontSize: 12,
               height: 1.5,
             ),
@@ -1275,7 +1275,7 @@ class _ToolDeclarationCard extends StatelessWidget {
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
-                      fontFamily: 'FiraCode',
+                      fontFamily: 'JetBrains Mono',
                       fontSize: 14,
                     ),
                   ),
@@ -1319,7 +1319,7 @@ class _ToolDeclarationCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: complex ? colors.textMuted : colors.textPrimary,
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: complex ? 11 : 22,
                 fontWeight: complex ? FontWeight.w500 : FontWeight.w800,
                 height: complex ? 1.4 : 1.15,
@@ -1496,7 +1496,7 @@ class _ProxySettingsEditorDialogState
               widget.data.document.path,
               style: TextStyle(
                 color: colors.textMuted,
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 12,
               ),
             ),
@@ -1860,7 +1860,7 @@ class _RuntimeSettingsEditorDialogState
               widget.data.document.path,
               style: TextStyle(
                 color: colors.textMuted,
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 12,
               ),
             ),
@@ -2317,7 +2317,7 @@ class _ConfigDocumentEditorDialogState
               child: SelectableText(
                 widget.document.path,
                 style: const TextStyle(
-                  fontFamily: 'FiraCode',
+                  fontFamily: 'JetBrains Mono',
                   fontSize: 12,
                   height: 1.45,
                 ),
@@ -2391,7 +2391,7 @@ class _ConfigDocumentEditorDialogState
         autocorrect: false,
         enableSuggestions: false,
         style: const TextStyle(
-          fontFamily: 'FiraCode',
+          fontFamily: 'JetBrains Mono',
           fontSize: 13,
           height: 1.6,
         ),
@@ -2627,7 +2627,7 @@ class _JavaAliasesEditorDialogState
               widget.document.path,
               style: TextStyle(
                 color: colors.textMuted,
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 12,
               ),
             ),
@@ -2759,7 +2759,7 @@ class _JavaAliasesEditorDialogState
                 autocorrect: false,
                 enableSuggestions: false,
                 style: const TextStyle(
-                  fontFamily: 'FiraCode',
+                  fontFamily: 'JetBrains Mono',
                   fontSize: 13,
                   height: 1.55,
                 ),
@@ -2944,7 +2944,7 @@ class _CodePanel extends StatelessWidget {
         child: SelectableText(
           content,
           style: const TextStyle(
-            fontFamily: 'FiraCode',
+            fontFamily: 'JetBrains Mono',
             fontSize: 13,
             height: 1.6,
           ),
@@ -2958,7 +2958,7 @@ class _CodePanel extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontFamily: 'FiraCode',
+            fontFamily: 'JetBrains Mono',
             fontSize: 17,
             fontWeight: FontWeight.w700,
           ),

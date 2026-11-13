@@ -39,6 +39,7 @@ final selectedConfigProjectProvider = Provider<ProjectRecord?>((ref) {
 });
 
 final configProvider = FutureProvider<ConfigWorkspaceData>((ref) {
+  ref.watch(appLocaleProvider);
   final project = ref.watch(selectedConfigProjectProvider);
   final hasTrackedProject = project != null;
   return ref

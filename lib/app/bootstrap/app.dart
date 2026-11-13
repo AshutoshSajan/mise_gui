@@ -144,6 +144,7 @@ class _AppUpdateDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLanguageProvider);
     final theme = Theme.of(context);
     final colors = AppTheme.colorsOf(context);
     final noteLines = _releaseNoteLines(updateInfo.releaseNotes);

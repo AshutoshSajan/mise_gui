@@ -3,6 +3,7 @@ import 'package:mise_gui/app/bootstrap/dependencies.dart';
 import 'package:mise_gui/models/app_models.dart';
 
 final toolsProvider = FutureProvider<List<ToolRecord>>((ref) {
+  ref.watch(appLocaleProvider);
   return ref.watch(toolsRepositoryProvider).loadTools();
 });
 

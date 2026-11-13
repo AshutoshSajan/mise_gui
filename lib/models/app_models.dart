@@ -6,12 +6,35 @@ class SummaryMetric {
     required this.value,
     required this.caption,
     required this.level,
+    this.systemInfo,
   });
 
   final String label;
   final String value;
   final String caption;
   final HealthLevel level;
+
+  /// Structured host details for the system metric.
+  ///
+  /// Presentation code must render these fields instead of parsing [caption],
+  /// because [caption] contains localized text and is only a fallback summary.
+  final SystemInfo? systemInfo;
+}
+
+class SystemInfo {
+  const SystemInfo({
+    this.build,
+    this.architecture,
+    this.processor,
+    this.memory,
+    this.disk,
+  });
+
+  final String? build;
+  final String? architecture;
+  final String? processor;
+  final String? memory;
+  final String? disk;
 }
 
 class AppVersionInfo {

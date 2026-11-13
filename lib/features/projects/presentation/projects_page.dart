@@ -250,7 +250,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                   risk.path,
                   style: TextStyle(
                     color: colors.textPrimary,
-                    fontFamily: 'FiraCode',
+                    fontFamily: 'JetBrains Mono',
                     fontSize: 12,
                     height: 1.45,
                   ),
@@ -404,7 +404,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
             'Manage scan directories. Only projects that override global versions are listed.',
           ),
           actions: [
-            FilledButton.icon(
+            OutlinedButton.icon(
               onPressed: _handleRefresh,
               icon: _refreshing
                   ? const SizedBox(
@@ -543,11 +543,13 @@ class _ScanDirectoriesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AppPanel(
       padding: const EdgeInsets.all(18),
       radius: 20,
-      backgroundAlpha: 0.58,
-      borderAlpha: 0.42,
+      backgroundAlpha: isDark ? 0.58 : 0.85,
+      borderAlpha: isDark ? 0.42 : 0.7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -867,7 +869,7 @@ class _ScanDirectoryCard extends StatelessWidget {
                       directory.path,
                       style: TextStyle(
                         color: colors.textMuted,
-                        fontFamily: 'FiraCode',
+                        fontFamily: 'JetBrains Mono',
                         fontSize: 12,
                         height: 1.45,
                       ),
@@ -1281,7 +1283,7 @@ class _OverridesPanel extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Column(
                 children: [
-                  const _OverridesTableHeader(),
+                  _OverridesTableHeader(),
                   const SizedBox(height: 12),
                   for (var index = 0; index < overrideRows.length; index++) ...[
                     _OverridesTableRow(row: overrideRows[index]),
@@ -1310,11 +1312,32 @@ class _OverridesEmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: colors.backgroundSoft.withValues(alpha: 0.78),
+        color: colors.panelMuted.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.border),
+        border: Border.all(color: colors.border.withValues(alpha: 0.85)),
       ),
-      child: Text(message, style: TextStyle(color: colors.textMuted)),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.panelRaised.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+            ),
+            child: Icon(
+              Icons.filter_alt_off_rounded,
+              size: 18,
+              color: colors.textMuted,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: TextStyle(color: colors.textMuted)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1331,9 +1354,9 @@ class _OverridesTableHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: colors.backgroundSoft.withValues(alpha: 0.8),
+        color: colors.panelMuted.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
+        border: Border.all(color: colors.border.withValues(alpha: 0.85)),
       ),
       child: SizedBox(
         width: _tableContentWidth,
