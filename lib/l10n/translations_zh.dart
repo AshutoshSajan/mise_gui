@@ -1,6 +1,10 @@
 const Map<String, String> appTranslationsZh = <String, String>{
   'Overview': '总览',
   'Environment overview': '环境总览',
+  'Live state of your local mise environment.': '本地 mise 环境的实时状态。',
+  'Host': '主机',
+  'Manifest': '清单',
+  'Activity': '活动',
   'Tools': '工具',
   'Tool': '工具',
   'Tool versions': '工具版本',
@@ -165,6 +169,8 @@ const Map<String, String> appTranslationsZh = <String, String>{
   'Review results of operations run from the app.': '查看最近通过界面执行过的操作结果。',
   'View all': '查看全部',
   'No recent operations yet.': '当前还没有最近操作记录。',
+  'Run an install or upgrade from Tools and it will appear here.':
+      '在工具页执行安装或升级后，记录会显示在这里。',
   'Open {destination}': '打开{destination}',
   'Open {metric}': '打开{metric}',
   'Installed tools': '已装工具',
