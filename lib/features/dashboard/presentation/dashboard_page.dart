@@ -1238,7 +1238,7 @@ class _MiseSelfUpdateLog extends StatelessWidget {
             line,
             style: TextStyle(
               color: colors.textMuted,
-              fontFamily: 'FiraCode',
+              fontFamily: 'JetBrains Mono',
               fontSize: 12,
               height: 1.4,
             ),

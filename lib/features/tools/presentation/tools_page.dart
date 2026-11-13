@@ -791,7 +791,7 @@ class _CurrentCommandView extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: colors.textPrimary,
-          fontFamily: 'monospace',
+          fontFamily: 'JetBrains Mono',
           fontSize: 12.5,
           height: 1.35,
         ),
@@ -837,7 +837,7 @@ class _ActionLogView extends StatelessWidget {
                   line,
                   style: TextStyle(
                     color: colors.textMuted,
-                    fontFamily: 'monospace',
+                    fontFamily: 'JetBrains Mono',
                     fontSize: 12,
                     height: 1.42,
                   ),
@@ -1291,7 +1291,7 @@ class _VersionSuggestionRow extends StatelessWidget {
                   child: Text(
                     version,
                     style: const TextStyle(
-                      fontFamily: 'FiraCode',
+                      fontFamily: 'JetBrains Mono',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1727,7 +1727,7 @@ class _ToolHeroPanel extends StatelessWidget {
                         'version': tool.activeVersion,
                       }),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontFamily: 'FiraCode',
+                        fontFamily: 'JetBrains Mono',
                         fontSize: 16,
                       ),
                     ),
@@ -1739,7 +1739,7 @@ class _ToolHeroPanel extends StatelessWidget {
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: 13,
-                        fontFamily: 'FiraCode',
+                        fontFamily: 'JetBrains Mono',
                       ),
                     ),
                   ],
@@ -2009,7 +2009,7 @@ class _VersionCard extends StatelessWidget {
               version.version,
               style: TextStyle(
                 color: colors.textPrimary,
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -2445,7 +2445,7 @@ class _MiniFact extends StatelessWidget {
         style: TextStyle(
           color: colors.textMuted,
           fontSize: 12,
-          fontFamily: 'FiraCode',
+          fontFamily: 'JetBrains Mono',
         ),
       ),
     );

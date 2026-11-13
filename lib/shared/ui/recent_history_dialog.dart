@@ -170,7 +170,7 @@ class RecentHistoryListTile extends StatelessWidget {
               SelectableText(
                 entry.command,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontFamily: 'FiraCode',
+                  fontFamily: 'JetBrains Mono',
                   fontSize: 15,
                 ),
               ),
@@ -197,7 +197,7 @@ class RecentHistoryListTile extends StatelessWidget {
                       color: entry.isFailure
                           ? colors.warning
                           : colors.textMuted,
-                      fontFamily: 'FiraCode',
+                      fontFamily: 'JetBrains Mono',
                       fontSize: 12,
                       height: 1.45,
                     ),
@@ -258,7 +258,7 @@ class _HistoryStatusMeta extends StatelessWidget {
           style: TextStyle(
             color: colors.textMuted.withValues(alpha: 0.92),
             fontSize: 12,
-            fontFamily: 'FiraCode',
+            fontFamily: 'JetBrains Mono',
           ),
         ),
       ],

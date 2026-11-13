@@ -249,7 +249,7 @@ class _Sidebar extends ConsumerWidget {
                                           const Text(
                                             'Mise GUI',
                                             style: TextStyle(
-                                              fontFamily: 'FiraCode',
+                                              fontFamily: 'JetBrains Mono',
                                               fontSize: 18,
                                               fontWeight: FontWeight.w700,
                                               letterSpacing: -0.3,
@@ -322,7 +322,7 @@ class _Sidebar extends ConsumerWidget {
                               style: TextStyle(
                                 color: colors.textMuted.withValues(alpha: 0.8),
                                 fontSize: 10,
-                                fontFamily: 'FiraCode',
+                                fontFamily: 'JetBrains Mono',
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.4,
                               ),
@@ -381,7 +381,7 @@ class _SidebarFooter extends StatelessWidget {
     final style = TextStyle(
       color: colors.textMuted.withValues(alpha: 0.82),
       fontSize: 11,
-      fontFamily: 'FiraCode',
+      fontFamily: 'JetBrains Mono',
       fontWeight: FontWeight.w600,
     );
 
@@ -1144,7 +1144,7 @@ class _InstallCommandCard extends StatelessWidget {
             child: SelectableText(
               installCommand,
               style: TextStyle(
-                fontFamily: 'FiraCode',
+                fontFamily: 'JetBrains Mono',
                 fontSize: 14,
                 height: 1.55,
                 color: colors.textPrimary,
@@ -1345,7 +1345,7 @@ class _StepRow extends StatelessWidget {
             index,
             style: TextStyle(
               color: colors.accent,
-              fontFamily: 'FiraCode',
+              fontFamily: 'JetBrains Mono',
               fontWeight: FontWeight.w700,
             ),
           ),
