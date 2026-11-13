@@ -5,6 +5,7 @@ const Map<String, String> appTranslationsZh = <String, String>{
   'Host': '主机',
   'Manifest': '清单',
   'Activity': '活动',
+  'Update': '更新',
   'Tools': '工具',
   'Tool': '工具',
   'Tool versions': '工具版本',
